@@ -1,0 +1,24 @@
+训练
+cd /mnt/lm_interntrain_env/ryh/codes/train_internvl
+# 提交训练任务, 可以换自己的
+bash shell/mrun.sh shell/202511/qwen3_base_30a3_thinking_vit_1b_code.sh
+# 训练结束会在RUN目录保存ckpt
+转换
+cd /mnt/lm_interntrain_env/ryh/codes/train_internvl/qwen3_moe2hf
+# 这里的src是上面训练的步数的ckpt，tgt可以是同样的目录+hf
+bash to_hf.sh <src> <tgt>
+# 将上面的vlm的hf转为llm的hf
+cd /mnt/lm_interntrain_env/ryh/codes/train_internvl
+/mnt/afs/wanghongli/.conda/envs/p10t251/bin/python save_weight_v2.py --model_dir <上面的vllm路径> --save_root <llm hf路径>
+# 拷贝配置到hf_llm_part
+cp /mnt/lm_interntrain_env/ryh/codes/train_internvl/qwen3_moe2hf/qwen3_hf_config/* <llm hf路径>
+cp /mnt/lm_interntrain_env/ryh/codes/train_internvl/RUN/qwen3-30b-a3b-Thinking-2507_from_sftalpha_9.3.6.1_1201v2_20251206/1000hf_llm_part/config.json <llm hf路径>
+# 修改rope base，如果你的模型sft训练的时候rope base不是官方的，这里config.json的rope_theta要做相应修改
+# 修改max position embedding，如果你的模型sft训练的时候训练了长文，如128k和官方不一致，config.json里的max position embedding需要做相关更新
+# 一般sft使用1000万rope和40960的max position embedding，保持默认即可
+评测
+# 非agent任务评测
+cd /mnt/afs1/yangyibo/code
+# 第二个参数是llm hf格式，第三个参数决定是否要用think模式，第四个参数指定是内部模型（turbo系列）还是外部模型（官方qwen3等）
+bash sco_deploy_eval.sh <模型名字> <llmhf 路径> False internal
+# 指标在/mnt/afs1/yangyibo/code/results下的模型名字下

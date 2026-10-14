@@ -1,0 +1,395 @@
+# AppWorld ACL2024 Best Resource Paper
+
+论文标题：*AppWorld: A Controllable World of Apps and People for Benchmarking Interactive Coding Agents*ACL Anthol...
+
+> 
+> 下面**摘要、引言关键段落、贡献点全部是论文原文摘录**；实验分析部分为整理总结，区分开。
+
+## 1. Abstract（原文完整摘要）AppWorld
+
+> 
+> Autonomous agents that address day‑to‑day digital tasks (e.g., ordering groceries for a household), must not only operate multiple apps (e.g., notes, messaging, shopping app) via APIs, but also generate rich code with complex control flow in an iterative manner based on their interaction with the environment. However, existing benchmarks for tool use are inadequate, as they only cover tasks that require a simple sequence of API calls.
+> 
+> 
+> To remedy this gap, we built AppWorld Engine, a high‑quality execution environment (60K lines of code) of 9 day‑to‑day apps operable via 457 APIs and populated with realistic digital activities simulating the lives of ~100 fictitious users. We then created AppWorld Benchmark (40K lines of code), a suite of 750 natural, diverse, and challenging autonomous agent tasks requiring rich and interactive code generation. It supports robust programmatic evaluation with state‑based unit tests, allowing for different ways of completing a task while also checking for unexpected changes, i.e., collateral damage. The state‑of‑the‑art LLM, GPT‑4o, solves only ~49% of our "normal" tasks and ~30% of "challenge" tasks, while other models solve at least 16% fewer. This highlights the benchmark’s difficulty and AppWorld’s potential to push the frontiers of interactive coding agents.
+
+中文直译：
+处理日常数字任务（例如为家庭订购杂货）的自主 Agent，不仅需要通过 API 操作多个应用（笔记、消息、购物软件），还需要基于和环境的交互迭代生成具备复杂控制流的代码。现有工具调用基准存在缺陷，大多只覆盖简单 API 顺序调用。
+为填补该缺口，我们构建 AppWorld Engine 高质量执行环境（6 万行代码），包含 9 个日常 App，457 个 API，模拟约 100 个虚拟用户真实数字行为；在此之上构建 AppWorld Benchmark（4 万行代码），750 条自然多样高难度 Agent 任务，要求交互式代码生成。采用基于状态单元测试做程序化评测，允许多种合法解题路径，同时检测附带损伤（collateral damage）。SOTA 模型 GPT‑4o 仅能完成 Normal 任务约 49%，Challenge 任务约 30%，其余模型至少低 16 个百分点，证明该基准的难度，可推动交互式编码 Agent 研究。
+
+## 2. Introduction 关键原文摘录（截取核心问题陈述）
+
+> 
+> Existing tool‑use benchmarks mostly feature tasks solvable by a simple sequence of function calls. They rarely require complex control flow such as loops, conditionals, branching, and error‑driven iterative rewriting of code. Moreover, many benchmarks use static read‑only tools; agent actions do not mutate the environment state. In real life, performing actions changes your emails, your bank balances, your todo lists, and so on. Distractor information arising from existing user data is also largely missing in prior benchmarks.
+> 
+> 
+> Further, many benchmarks rely on LLM‑as‑judge or human evaluation, or compare agent outputs against a single gold reference solution. Real‑world tasks often admit multiple valid solutions, making reference‑based matching brittle. Evaluating whether side‑effects and unintended damage happened is rarely supported.
+
+中文要点（原文）：
+现有工具调用基准大多只需要简单函数调用序列，几乎不需要循环、条件分支、根据报错迭代重写代码这类复杂控制流。很多基准工具只读不写，Agent 动作不会改变环境状态。现实中操作会修改邮件、余额、待办列表。旧基准普遍缺少来自用户历史数据的干扰信息。
+另外大量基准依赖 LLM 裁判、人工打分，或者和单一标准答案对比。现实任务存在多种可行解法，参考匹配很脆弱；几乎没有基准检测副作用、意外附带损伤。
+
+## 3. Contributions 论文原文贡献点（原文分点）
+
+> 
+> 1. **Controllable Execution Environment.** We develop AppWorld Engine, a fully controllable, stable, and reproducible execution environment of simulated everyday applications populated with realistic user data and interpersonal relationships. It exposes 457 APIs across nine apps, supports state‑mutating operations, and generates natural distractors derived from existing user data.
+> 2. **A Challenging Interactive‑Coding Agent Benchmark.** We create AppWorld Benchmark consisting of 750 diverse naturalistic agent tasks that require iterative code generation with complex control‑flow, cross‑app reasoning, and handling of environmental distractors. The benchmark is split into normal and challenge test partitions.
+> 3. **Programmatic State‑Based Evaluation.** Existing evaluation methods rely on LLMs or human judgment, comparing tool calls and answers to a gold solution, which does not apply to tasks with multiple valid solution paths. Instead, AppWorld provides programmatic and process‑agnostic criteria that robustly check for task completion. It also detects collateral damage, i.e., unintended side‑effects caused by agent actions. We additionally introduce Scenario‑Goal‑Completion (SGC), a metric measuring consistency across task variants derived from the same underlying scenario.
+> 4. **Empirical Analysis of SOTA Agents.** We perform extensive benchmarking of state‑of‑the‑LLM agents, revealing substantial failure modes even for strong models, highlighting open challenges for future work.
+
+翻译：
+
+1. **可控执行环境**：AppWorld Engine，完全可控、稳定、可复现的仿真日常 App 环境，填充真实用户数据与人物关系；9 个 App 共 457API；支持修改环境状态；生成来自用户历史的自然干扰信息。
+2. **高难度交互式编码 Agent 基准**：750 条多样化真实任务，需要迭代生成带复杂控制流代码、跨 App 推理、处理环境干扰；数据集划分为 normal /challenge 测试集。
+3. **基于状态的程序化评测**：旧方案依赖 LLM / 人工评判、对比标准答案，不适合多解任务。AppWorld 采用和实现路径无关的程序判定；检测 collateral damage（Agent 带来的非预期副作用）；提出 SGC 指标：衡量同一场景不同变体下 Agent 表现稳定性。
+4. **SOTA Agent 实证分析**：大规模评测主流大模型 Agent；即使很强的模型也存在大量失败模式，指出未来研究开放问题。
+
+## 4. Conclusion 原文结尾段落节选
+
+> 
+> Responsible development of LLM‑based autonomous agents for day‑to‑day tasks has been hindered by a lack of a unified, stable, and standardized executable environment and an absence of benchmarks with appropriate levels of complexity and interactivity. To fill this gap, we introduced the AppWorld framework with its controllable and reproducible execution environment and a benchmark of interactive coding for API‑based complex everyday tasks. Our programmatic evaluation suite and realistic hurdles and distractors allow a rigorous and robust assessment of autonomous agents. Our benchmarking and analysis of state‑of‑the‑art models underscore the overall difficulty of AppWorld and highlight open challenges for modern LLMs to automate our everyday digital tasks.
+
+## 5. 实验部分（我整理总结，非原文摘抄）
+
+1. **数据集划分**
+
+- train / dev；`test_normal` 168 条；`test_challenge` 417 条（challenge 包含部分没在训练见过的 API）
+- 全部任务基于 106 个虚拟人物，每个人有联系人、订单、邮件、账单历史，任务自带大量无关干扰数据。
+
+2. **两个核心指标**
+
+- **TGC Task Goal Completion**：任务目标完成率，跑数据库单元测试校验最终状态；就算目标达成，如果弄坏别的数据（collateral damage）直接判失败。
+- **SGC Scenario Goal Completion**：同一个原始场景生成多个变体，全部变体都做对才算成功，衡量 Agent 鲁棒性；SGC 分数显著低于 TGC。
+
+3. **主要实验结果**
+
+- GPT‑4o (ReAct)：Normal TGC=48.8%；Challenge TGC=30.2%；SGC 进一步大幅下跌。
+- 开源最强 LLaMA3 系模型：Normal 仅 24.4%，Challenge 仅 7%。
+- Plan‑and‑Execute、ReAct 等经典 Agent 范式带来提升有限，仅靠 Prompt 不足以解决这类复杂任务。
+
+4. **论文观察到的主要失败模式**
+① 不会根据环境反馈动态调整策略；②长链条多依赖 API 调用推理失败；③错误恢复能力差；④长交互上下文管理失效。
+
+## 6. 论文原文写明的 Limitations（原文）
+
+> 
+> Simulation Constraints: Despite high fidelity, the simulated environment cannot capture all aspects of real‑world application complexity.
+> API Coverage: The nine applications, while representative, don’t cover the full spectrum of digital tools users interact with daily.
+> User Behavior Modeling: The simulated users follow predictable patterns that may not reflect the full complexity of human behavior.
+> Scalability: The current benchmark size, while substantial, may need expansion to support more comprehensive evaluation.
+
+翻译：
+仿真局限：尽管保真度高，无法覆盖真实 App 全部复杂度；API 覆盖有限；虚拟用户行为模式偏可预测，不完全等价真实人类；数据集规模仍可进一步扩充。
+
+> 
+> 补充衍生工作 AppWorld‑UL（ICML2026）不在原 ACL24 论文内，是后续扩展，测试 Agent 何时该向用户提问澄清、确认、告知不可行。
+
+如果你需要，我可以把某一节（比如 related work 相关工作）也摘录原文。
+
+今天 15:12
+
+Tool CUA 也讲一下，然后还有其他的这种，不管是移动端还是 OS 的 benchmark，我都要知道他们写的摘要和引言大概是什么样，特别是他们提出的贡献和他们的 gap。因为我自己会要提出一篇，我不知道最近他们可能觉得什么贡献比较重要。
+
+# ToolCUA + 主流 OS / Mobile‑GUI Agent Benchmark
+
+> 
+> 格式说明：**Abstract、Gap（原文提炼）、Contributions 尽量摘录论文原文；实验部分为我整理总结**。
+> 你写论文可以直接参考这些论文的**gap 写法、贡献点范式**，看 2024‑2026 大家都在 claim 什么创新。
+
+## 1. ToolCUA（复旦‑通义，2026，arXiv:2605.12481）arXiv
+
+> 
+> 不是 benchmark，是 Agent 算法工作；研究**Hybrid action space：GUI 点击动作 + Tool/API 工具调用混合**。
+
+### Abstract（原文）
+
+> 
+> Computer Use Agents (CUAs) can act through both atomic GUI actions (e.g., click, type) and high‑level tool calls (e.g., API‑based file operations ), but they are often confused by this hybrid action space: they do not know when to continue with GUI actions and when to switch to tools, and finally fail to select the optimal execution path. This difficulty stems from two issues. First, high‑quality interleaved GUI‑Tool trajectories are scarce, and collecting real tool trajectories is expensive and brittle. Second, existing supervision provides limited guidance for GUI‑Tool path selection, as most methods focus on step‑level action imitation or final task completion and offer little trajectory‑level feedback on whether GUI‑Tool switching leads to a more effective execution path. In this paper, we propose ToolCUA, an end‑to‑end agent designed to learn optimal GUI‑Tool path selection through a staged training paradigm. We first introduce an Interleaved GUI‑Tool Trajectory Scaling Pipeline that repurposes abundant static GUI trajectories and synthesizes a grounded library of tools, making it possible to scale diverse GUI‑Tool trajectories without manual engineering or real tool‑trajectory collection. Based on this data, we perform Tool‑Bootstrapped GUI RFT, which combines warmup SFT with single‑turn RL to improve decisions at critical GUI‑Tool switching points. Finally, we further optimize ToolCUA with Online Agentic RL in a high‑fidelity simulation environment.
+
+### Gap（原文提炼）
+
+1. CUA 同时拥有 GUI 原子动作 + 高层 tool 调用，**模型不知道什么时候该点界面、什么时候切工具 API，混合动作空间反而性能下降**。
+2. 真实交错的 GUI‑Tool 轨迹数据稀缺，人工采集成本高。
+3. 当前监督只做 step‑level 模仿或者只看最终任务成功；**缺少轨迹层面的反馈，去评判 “切换 GUI/Tool 是不是一条更优路径”**。
+
+### Contributions（原文四点）
+
+1. Identify the hybrid action‑space confusion problem：直接指出混合 GUI‑Tool 动作空间会带来性能退化。
+2. Interleaved GUI‑Tool Trajectory Scaling Pipeline：复用已有大量 GUI 轨迹，合成生成交错 GUI‑Tool 样本，不用人工采集真实混合轨迹。
+3. Tool‑Bootstrapped GUI RFT：SFT + 单轮 RL，专门优化 GUI‑Tool 切换关键决策点。
+4. Online Agentic RL；在 OSWorld‑MCP 仿真环境做 online 强化，在 OSWorld‑MCP 取得 SOTA，步数显著降低。
+
+### 实验小结（整理）
+
+- 测试环境：OSWorld‑MCP（支持 MCP 工具调用的 OSWorld 子集）
+- ToolCUA：46.85% 成功率，优于 Claude‑4‑Sonnet；平均执行步数 14.93，显著更少。
+- 关键现象：直接给强模型同时开放 GUI+Tool，**效果反而变差，路径选择混乱**。
+
+---
+
+## 2. OSWorld（X‑Lang，2024，桌面 OS 基准）智源社区
+
+### Abstract（原文核心截取）
+
+> 
+> Autonomous agents promise to complete complex computer‑based tasks with minimal human oversight. However, existing benchmarks lack interactive environments or are limited to specific applications or domains, failing to reflect the diversity and complexity of real‑world computer usage and limiting task scope and agent generalizability. To address this gap, we present OSWorld, a pioneering scalable real‑computer environment for multimodal agents supporting task setup, execution‑based evaluation, and interactive learning across operating systems including Ubuntu, Windows, macOS. Built upon OSWorld, we construct a benchmark of 369 computer tasks derived from real‑world computer‑use cases, with detailed initial‑state configuration and custom execution‑based evaluation scripts for reliable, reproducible assessment. Extensive evaluation of SOTA LLM/VLM‑based agents reveals substantial deficiencies as computer assistants. While human participants achieve over 72.36% success rate, the best agent only reaches 12.24%.
+
+### Gap（原文）
+
+1. 缺少可控可执行的真实桌面环境；很多 benchmark 仅限浏览器 web，不能操作桌面软件。
+2. 任务域窄，缺少跨 App 长流程工作流。
+3. 评判方式肤浅，只看输出文本，不去校验系统真实状态。
+4. 缺少跨多应用的 workflow 评测。
+
+### Contributions
+
+1. VM 驱动的多操作系统可复现仿真环境。
+2. 369 条源自真实用户场景任务，跨桌面、文件系统、网页。
+3. 自定义 execution‑based 评估脚本，校验系统内部状态，不是 LLM‑as‑judge。
+4. 大规模 SOTA agent 评测，揭示现实能力鸿沟。
+
+### OSWorld‑2.0（2026）补充 Gaposworld-v2...
+
+旧 benchmark 任务偏短，缺少**长 horizon 真实工作流**；任务平均人类耗时 1.6 小时，动态环境、流式输出、隐式状态推断、跨源推理这些现实挑战覆盖不足。
+
+---
+
+## 3. AndroidWorld（Google DeepMind，2024，安卓真机仿真）arXiv
+
+### Abstract 原文
+
+> 
+> Autonomous agents that execute human tasks by controlling computers can enhance human productivity and application accessibility. However, progress in this field will be driven by realistic and reproducible benchmarks. We present ANDROIDWORLD, a fully functional Android environment that provides reward signals for 116 programmatic tasks across 20 real‑world Android apps. Unlike existing interactive environments, which provide a static test set, ANDROIDWORLD dynamically constructs tasks that are parameterized and expressed in natural language in unlimited ways, thus enabling testing on a much larger and more realistic suite of tasks. To ensure reproducibility, each task includes dedicated initialization, success‑checking, and tear‑down logic, which modifies and inspects the device’s system state. Our best agent can complete 30.6% of ANDROIDWORLD’s tasks, leaving ample room for future work. Furthermore, we adapt a popular desktop web agent to work on Android, which we find to be less effective on mobile, suggesting future research is needed to achieve universal, cross‑platform agents. Finally, we also conduct a robustness analysis, showing that task variations can significantly affect agent performance.
+
+### Gap（原文）
+
+1. 移动端缺少真实、可复现、可规模化的交互式评测环境；很多是静态离线数据集，不是运行时环境。
+2. 静态固定测试集，很难做参数变体的鲁棒性测试；不知道模型换一点参数会不会直接崩。
+3. 缺少基于系统状态的 reward，大量依赖输出文本匹配。
+
+### Contributions
+
+1. AndroidWorld：完整安卓仿真环境，跑真实 App，系统状态做程序式判定。
+2. 参数化动态任务生成：同一个模板生成无穷多变体，做鲁棒性测试。
+3. 初始化‑成功校验‑销毁完整生命周期，保证复现。
+4. 基线 M3A；做变体扰动实验，证明任务参数微小变化会剧烈改变成功率。
+
+> 
+> 现象：桌面 Web Agent 直接迁移到移动端效果很差。
+
+---
+
+## 4. MobileWorld（ACL 2026，对标 AndroidWorld 的进阶移动端 benchmark）arXiv
+
+### Abstract 核心截取
+
+> 
+> Among existing online mobile‑use benchmarks, AndroidWorld has emerged as the dominant benchmark due to its reproducible environment and deterministic evaluation; however, recent agents achieving over 90% success rates indicate its saturation and motivate the need for a more challenging benchmark. In addition, its environment lacks key application categories, such as e‑commerce and enterprise communication, and does not reflect realistic mobile‑use scenarios characterized by vague user instructions and hybrid tool usage. To bridge this gap, we introduce MobileWorld, a substantially more challenging benchmark designed to better reflect real‑world mobile usage, comprising 201 tasks across 20 applications… It extends beyond standard GUI manipulation by introducing novel task categories, including agent‑user interaction and Model Context Protocol (MCP)‑augmented tasks.
+
+### Gap（原文）
+
+1. AndroidWorld 出现饱和，部分 agent 刷到很高成功率，难度不足。
+2. App 品类缺失电商、企业协作类。
+3. 缺少模糊指令、**Agent 向用户提问交互、GUI+MCP 工具混合使用**的任务。
+4. 跨 App 长流程任务占比很低。
+
+### Contributions
+
+1. 更难的移动端 online benchmark，201 任务，跨 App 任务占比 62.2%，平均步数翻倍。
+2. 新增两类任务：①Agent‑user 交互（需要主动提问澄清）；②MCP‑augmented 混合 GUI‑tool 任务。
+3. 快照容器环境，数据库检查，保证可复现。
+4. 基线实验：最好 agent 仅 51.7%；端到端 VLM 仅 20.9%。
+
+> 
+> 这篇的 gap 和你做 AMI‑Bench 高度重合：指令清晰度分级、需要向用户提问、GUI+tool 混合。
+
+---
+
+## 5. AppWorld（ACL2024 Best Resource Paper，API 仿真，无视觉 GUI，前面已经完整摘录）
+
+> 
+> 定位：coding‑agent，输出 Python 调用 API，**没有屏幕视觉输入**。
+> Gap：旧 tool‑use benchmark 只有简单顺序 function call；缺少循环 / 条件；环境不会 mutate 状态；缺少干扰用户数据；缺少 collateral‑damage（附带损伤）检测；缺少 SGC 指标衡量同一场景变体鲁棒性。
+
+## 6. MB‑Bench / AMI‑Bench（你的工作，第三作者）
+
+> 
+> 我把它和别人论文的 gap 范式对齐，方便你写 introduction：
+
+**MB‑Bench gap（原始）**
+
+1. 很多移动端 benchmark 要么离线静态轨迹，要么 online 环境但缺少**指令模糊度分级**；全部给 agent 完备清晰指令，现实中人指令经常残缺模糊。
+2. 缺少强制 Agent 向用户提问澄清的任务子集；agent 只会闷头执行或者编造信息。
+3. 缺少真实安卓设备，很多是仿真合成 UI。
+
+**AMI‑Bench 进一步拓展 gap**
+
+1. 现有 online mobile benchmark 大多只评估纯 GUI 点击动作，**很少系统研究 GUI 与外部工具 / API 混合的任务**。
+2. 指令清晰度多级划分，但缺少系统评测：当信息缺失时，agent 是合理提问、还是幻觉编造、还是刻板重复动作。
+3. 缺少对 “collateral damage 附带损伤”、刻板重复行为、大规模幻觉编造的系统指标。
+
+---
+
+# 汇总：2024‑2026 大家都在 claim 的贡献类型（写论文可以参考）
+
+### 类别 A：Benchmark / Dataset 工作（最常见）
+
+1. **环境层**：提供可复现 online 仿真 / 真机环境；支持快照、初始化‑校验‑销毁；数据库级状态校验，拒绝 LLM‑as‑judge。
+2. **任务能力缺口**
+   - 长 horizon、高比例跨 App 工作流
+   - **模糊指令、信息缺失，要求 Agent 主动向用户提问**（现在超级火，MobileWorld、AMI‑Bench、AppWorld‑UL 都在抢这个点）
+   - 真实噪声：弹窗广告、干扰历史数据
+   - **Hybrid action space：GUI 操作 + Tool/MCP API 混合**（ToolCUA、MobileWorld、AMI‑Bench）
+3. **指标创新**
+   - 不止最终成功率 SR；增加变体鲁棒性指标（SGC）；过程性指标；检测附带损伤 collateral damage；检测刻板重复行为；幻觉检测。
+4. **大规模 baseline 评测，归纳失败模式**。
+
+### 类别 B：Agent 算法工作（ToolCUA 这类）
+
+1. 指出混合动作空间的新问题：GUI 和 Tool 切换决策难题。
+2. 数据流水线：合成 / 扩量缺少的交错轨迹样本。
+3. 训练范式：SFT + RFT / Online RL，专门针对决策关键点优化。
+4. 在多个公开 benchmark 上 SOTA，同时分析行为、步数效率，不只看成功率。
+
+### 高频反复出现的通用 Gap 句式（你写 intro 可以直接改写）
+
+1. Existing benchmarks mostly provide complete and unambiguous instructions to agents, while real‑world user requests are often incomplete or ambiguous, requiring agents to proactively elicit missing information instead of hallucinating or repeating futile actions.
+
+> 
+> 现有 benchmark 大多给完备无歧义指令，但真实用户请求经常残缺模糊，需要 Agent 主动询问，而不是幻觉或者无效重复。
+
+2. Most prior work evaluates GUI agents and tool‑use agents separately; few benchmarks systematically study hybrid scenarios where agents can choose between GUI manipulation and external tool calls.
+
+> 
+> 过去大多分开评测 GUI Agent 和 Tool‑use Agent；很少系统研究 Agent 可以二选一的混合场景。
+
+3. Evaluation is often binary success‑or‑failure; it cannot diagnose whether agents suffer from repetitive behaviors, severe hallucinations, or unintended collateral damage to environment states.
+
+> 
+> 评判经常非黑即白；无法诊断刻板重复、严重幻觉、对环境的附带损伤。
+
+如果你需要，我可以帮你把**你的 AMI‑Bench 的 introduction 草稿直接写一版**，严格对齐上面这些论文的写作范式。
+
+今天 15:17
+我感觉 appworld 的任务写的贡献挺有新意，其他任务感觉都在说那几条，其实我们也是，所以展现不出来特别贡献在哪，因为我们整体也是更真实的模拟环境（浏览器模拟手机），任务也更加真实，从这构造数据里生成的所以不是那种很常见的核心交互，然后还开放了 tool 的调用，包括跨 app，长程，可是所有人都这么说的话，我们根本看不出来到底做的怎么样，感觉是不是还是得看具体 case。比如我们有个任务是，王总在杭州有个会议，你去腾讯会议里查看会议安排，订好火车票和酒店，注意不要超过公司住宿预算，订好之后在卡皮记账记录，并把本月账单分享给张伟。这个你应该能看出来考察了很多能力。
+
+今天 15:29
+
+你点出了现在 GUI‑Agent benchmark 非常痛的写作困境：
+
+> 
+> 引言里的 claim 大家话术高度趋同：更真实环境、跨 App、长流程、支持 tool 调用、真实任务。审稿人扫过去，会觉得 “又是一套熟悉的套话”，看不出你和 AndroidWorld / MobileWorld / OSWorld 的本质差异。**口头的贡献描述会内卷，真正拉开区分度是靠代表性 case + 约束条件 + 失败模式，而不是形容词。**
+
+你举的这个例子：
+
+> 
+> 王总在杭州有个会议，你去腾讯会议里查看会议安排，订好火车票和酒店，注意不要超过公司住宿预算，订好之后在卡皮记账记录，并把本月账单分享给张伟。
+
+这个任务一眼就能看出它身上叠加的多重约束，这就是你论文要拿出来当招牌的典型样例。
+我拆解这个任务里面埋藏的难点，这些是你正文、附录、表格、样例截图要重点展示的，不能只藏在数据集里。
+
+### 这个任务内在考察点（写论文可以直接写）
+
+1. **多源信息耦合，不是单 App 闭环**
+信息源头在腾讯会议（查询会议时间、地点杭州），这是第一步信息抽取；后续订票、订酒店要依赖从前面 App 读出来的时间地点，不是指令直接全部给你。
+
+> 
+> 很多 benchmark 任务，用户 prompt 直接把时间地点全部写死，Agent 不需要从别的 App 里捞事实。
+
+2. **硬数值约束：公司住宿预算**
+不是 “帮我订酒店” 这种开放式任务，存在**外部业务规则约束**。Agent 要读取酒店价格，做数值判断，过滤掉超预算选项。
+大部分移动端 GUI benchmark 很少内置这种业务预算约束；很多任务只要完成 “订酒店” 就算成功，不会校验是否违反预算。
+3. **跨 4 个不同 App 串联：腾讯会议 → 购票 App → 酒店 App → 记账 App → 联系人分享**
+长链路，中间任意一步出错，后续全部作废。
+4. **工具 / GUI 选择分叉点（你们开放 tool 调用的价值在这里）**
+Agent 有两条可行路径：
+
+- 路径 A：全部靠 GUI 点击，在各个 App 点点点完成整套流程
+- 路径 B：读取会议信息之后，调用外部 tool 去查车次、比价，再切回 GUI 下单
+
+> 
+> 这就是 ToolCUA、MobileWorld 强调的 hybrid action space。
+> 很多 benchmark 只是允许 tool，但任务本身不会逼迫模型必须做 “选 GUI 还是选 tool” 的决策。而这个 case 天然就存在路径选择。
+
+5. **最终不只是做完动作，有产物输出：把本月账单分享给张伟**
+任务终点不是 “完成下单”，还要检索历史账单、筛选本月、找到联系人、执行分享。
+6. **失败空间非常丰富（这是审稿人看重的）**
+
+- 直接忽略预算，订贵的酒店，动作全做完但是任务失败（collateral damage / 约束违背）
+- 不去腾讯会议读取时间，直接幻觉编造会议时间订车票
+- 中间某一步失败，开始刻板重复点击同一个按钮，不会回退
+- 记账记错金额，分享错人
+
+> 
+> 这些失败不是简单 “点错按钮”，是逻辑、约束、幻觉层面的问题。
+
+---
+
+## 回到你的论文写作怎么解决 “大家都在说一样的话”
+
+### 1. Introduction 部分：不要只堆形容词，要做**对比式 gap**
+
+不要写：
+
+> 
+> 我们构建了更真实、跨 App、长流程、支持 tool 调用的移动端 benchmark。
+
+改成对标式，指出别人做了什么，但**缺少哪一类约束和任务范式**：
+
+> 
+> Prior mobile benchmarks support cross‑app workflows, yet most tasks provide all critical parameters within user prompts. Agents rarely need to extract key facts from one application and respect external numerical business constraints when operating downstream apps. Moreover, few tasks force agents to deliberate between pure GUI manipulation and external tool invocation under real‑world business requirements.
+
+翻译：现有的移动端基准虽然支持跨 App 流程，但大多数任务会把全部关键参数写在用户指令内。Agent 很少需要从一个应用抽取关键事实，并且在后续 App 操作中遵守外部数值业务约束。同时很少有任务迫使 Agent 在真实业务要求下，去斟酌选择纯 GUI 操作还是外部工具调用。
+
+👉 这样你的 “王总杭州会议” 这个 case 就正好对应上面这个 gap，文字和样例互相印证，就不再是空泛套话。
+
+### 2. Related Work / Dataset Construction
+
+不要笼统说 “任务来自真实用户场景”。
+写清楚你的生成逻辑：
+
+> 
+> Instead of templating simple UI‑oriented interactions, our tasks are grounded in real‑world office workflow scenarios, which naturally embed chained information extraction, numerical budget constraints, multi‑app hand‑offs, and optional tool usage branches.
+
+> 
+> （我们不使用面向 UI 交互的简单模板；任务扎根真实办公工作流，天然嵌入链式信息抽取、数值预算约束、多 App 交接、可选工具分支。）
+
+### 3. 实验部分，一定要用这个 case 做定性分析（非常关键）
+
+定量表格所有人都有 SR 成功率。拉开差距的是**定性分析**。
+拿出这个任务，列举模型的几类典型失败：
+
+1. 直接忽略预算约束，完成全部操作但是违反业务条件；
+2. 不从腾讯会议读取会议时间，直接幻觉生成时间订票；
+3. 全程只会 GUI，明明可以调用 tool 比价，但完全不会切换；
+4. 中间步骤出错，进入刻板重复循环，不会回溯调整。
+
+把这些失败模式写进论文，就说明你的 benchmark 不是在测点按钮的能力，而是测**规划、信息溯源、业务约束遵守、工具‑GUI 决策**。
+
+### 4. 表格 / 附录放代表性任务样例
+
+附录专门放 3‑4 个代表性任务，就把这个 “王总杭州会议” 放进去。
+每个任务旁边标注它具备哪些能力标签：
+`[Cross‑App, Information Extraction From App, Numerical Budget Constraint, Hybrid GUI‑Tool optional, Long‑horizon]`
+
+> 
+> AndroidWorld、MobileWorld 论文附录都会放代表性任务，审稿人会直接翻附录看 case 质量。定量数字可以刷，但是 case 的设计骗不了人。
+
+### 5. 区分清楚你和 MobileWorld 的细微差别（很重要）
+
+MobileWorld 也做了 hybrid GUI+MCP、跨 App、需要提问。
+那你的差异化在哪里：
+
+- MobileWorld 的混合任务更多是：GUI 做完一部分，调用 tool 做简单查询；
+- 而你的很多任务内置**硬性业务数值约束（预算、金额、时间）**，tool/GUI 两条路径都可以完成，但是都必须满足约束条件。
+
+> 
+> 很多 benchmark 只是允许 tool；你的任务是**业务逻辑本身就逼迫模型做路径权衡**。
+
+### 简单总结
+
+- 口头 claim（更真实、跨 App、长流程）属于标配，大家都写，**不能作为核心贡献**；
+- **真正的贡献要落到：什么样的约束、什么样的失败模式，是现有 benchmark 很少成体系覆盖的，再用代表性 case 去实例化这个点**。
+- 定量 SR 只是数字；**定性分析 + 典型 case + 对应的失败模式，才是审稿人评判 benchmark 价值的关键**。
+
+如果你需要，我可以帮你把这一段 gap，直接润色成论文 introduction 的英文段落。
