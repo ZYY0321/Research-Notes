@@ -13,8 +13,8 @@
 | Kea | ASE 2024 | 性质测试框架（property-based），用户写性质 | 待核 |
 | PDTDroid | FSE 2024 Industry | 工业落地的性质测试 | 待核 |
 | OLLM | APSEC 2024 | LLM 当 oracle 判功能 bug | 待核 |
-| AndroB2O | ASE 2025 | 从 bug 报告生成 oracle | 待核 |
-| VisionDroid（arXiv 名 Trident） | TSE 2025 / ICSE 2026 journal-first | MLLM 看截图判非崩溃功能 bug | 待核 |
+| AndroB2O | ASE 2025 | 从 bug 报告生成 oracle | 已核实（会议页） |
+| VisionDroid（arXiv 名 Trident） | TSE 2025 / ICSE 2026 journal-first | MLLM 看截图判非崩溃功能 bug | 已核实 |
 | iPBT | ISSTA 2026 | 交互式性质测试 | 待核 |
 
 备注：

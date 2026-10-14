@@ -26,7 +26,45 @@
 3. **UX-Agent 的位置**：布局几何证据 + 可恢复的主动滑动验证，正好落在"交互探索 + 区分意图"的交叉点；最接近的对手是 ReFLAIR（Web）和多窗口论文（Android，截断没赢 YOLO）。
 
 ## B. LLM 用于 GUI 测试
-（检索中，完成后补入）
+
+| 论文 | 年份·venue | 第一作者机构 | 动机（原文） | 贡献（原文要点） | 方法 | 实验/关键数字 | gap（作者自认 / 我们看到） | 一段话叙事 |
+|---|---|---|---|---|---|---|---|---|
+| **GPTDroid** Make LLM a Testing Expert | 2024 ICSE | 中科院软件所（Zhe Liu） | 学习式方法 "low testing coverage, inadequate generalization… heavy reliance on training data" | 把 GUI 测试 "formulate… to an interactive question & answering task"；functionality-aware memory | view hierarchy 转 prompt → LLM 出动作 → 功能记忆 | 93 应用；activity 覆盖 75%（+32%）；53 新崩溃，35 修复 | 自认：记不住早期探索 / 我们：不看截图，oracle 只有崩溃 | 把测试员换成会聊天的 LLM |
+| **VisionDroid**（arXiv 名 Trident） | 2025 TSE（ICSE 2026 journal-first） | 中科院软件所 | 测试 "limited to detecting crash bugs"；非崩溃错误需看 "a sequence of screenshots" | 非崩溃 bug 检测变成多模态问答；explorer/monitor/detector | 截图标框 → MLLM 探索 → 功能结束时先说预期再判 | 590 bug；P 50–72% / R 42–52%；43 新 bug，31 修复 | 自认：跨平台待深入 / 我们：鸿蒙仅 10 应用，可能幻觉 | **LLM 当功能 oracle**：先说预期再判对错 |
+| **DroidAgent** | 2024 ICST | KAIST | 工具 "target lower level adequacy metrics"，开发者要的是 feature 级测试 | 自主设任务并执行的 Android 测试智能体 | Planner/Actor/Observer/Reflector + 记忆 | 15 应用；activity 覆盖 61% vs 51% | 自认：只跑一次、可能数据污染 / 我们：无功能 oracle | 从"刷覆盖率"变成"测用户意图" |
+| **AUITestAgent** | 2024 arXiv（未录用） | 复旦（美团实习） | 需求 "typically written in natural language"，脚本跟不上迭代 | 首个自然语言需求驱动的 GUI 测试工具；工业验证 | 需求拆成交互+校验点；从控件/页面/轨迹三维取证 | oracle 准确率 0.90；美团每轮回归省 1.5 人日，4 新 bug | 自认：交互与校验解耦做不了交叉需求 / 我们：正文有占位数字 | 一句话需求 → 自动回归 |
+| **GTArena** | 2024 arXiv（未录用） | 浙江大学 | GUI 测试智能体 "lack standardized evaluation metrics" | 统一基准：意图生成、执行、缺陷检测 | POMDP 形式化；真实/注入/合成缺陷 | 任务成功 GPT-4o 16% vs 人 90%；缺陷召回约 14% | 自认：模型偏向答"无缺陷" / 我们：arXiv 与项目页版本不一致 | 现成大模型离"自主测试员"很远 |
+| **LLMigrate** | 2025 ISSTA | UC Irvine | 旧迁移方法 "struggled to accommodate real-world variations" | 首个用多模态 LLM 跨应用迁移 UI 测试，无需源码 | 源测试抽象成自然语言 → 目标应用边看边生成动作与断言 | 成功率 97.5%；省 91.1% 工作量 | 自认：toast、不可逆操作 / 我们：oracle 只有出现/不可见 | 测试不该每个 app 重写 |
+| **HmTest** | 2025 JCST | 南方科技大学 | 鸿蒙应用如何自动测试 "has become a crucial task" | 页面跳转图定向探索 + 强化学习 | 源码静态分析 + RL（**不是 LLM**） | 9 应用，覆盖优于 Wukong/DevEco（数字 UNVERIFIED） | 自认：大模型留作未来 / 我们：要源码 | 鸿蒙缺的是页面模型 |
+| **Android→OpenHarmony 迁移实证** | 2026 arXiv 2607.11245 | 哈工大（深圳） | "neither proposes solutions tailored for OpenHarmony nor provides a systematic evaluation" | 首个迁移实证；36 应用 108 用例基准；ITeM-HM | 改提示 + ArkUI 功能控件组 + 鸿蒙手势 | 现有方法 15%/26% → ITeM-HM 81%；失败 46% 来自架构差异 | 自认：只测核心功能 / 我们：匿名仓库 | **ArkUI 与 Android 结构不同**——鸿蒙专属证据 |
+| **LLMDroid** | 2025 FSE | 华中科技大学 | LLM 测试 "time inefficiency and high costs due to constant LLM querying" | 覆盖停滞时才叫 LLM 的增强框架 | 原工具探索 + 低增长时 LLM 导航 | 代码覆盖 +26%；GPT-4o mini $0.03/小时 | 自认：插桩崩溃 / 我们：依附宿主工具 | LLM 从驾驶员变导航员，省钱 |
+| **BugHunter** | 2025 FSE | 中科院软件所 | "similar apps often encounter similar bugs"，现有方法只追覆盖 | 用 13 万份历史缺陷报告做 RAG 引导探索 | 报告挂到页面转移图 → 检索 → MLLM 改写步骤 | 已知 bug 召回 64%（GPTDroid 40%）；49 新崩溃 | 自认：数据泄漏 / 我们：只针对崩溃 | 去别人摔过跤的地方 |
+| **GUIPilot** | 2025 ISSTA | 上海交大 / NUS | 工业要查与设计稿的 "deviations in screen layout, widget position, or GUI transition" | 首个面向设计稿的端到端 GUI 测试 | 控件编辑距离对齐 + VLM 按稿执行转移 | 80 应用；工业 9 个偏差全确认（摘要与引言 P/R 数字矛盾） | 自认：依赖 OpenAI / 我们：需要设计稿 | **设计稿就是 oracle** |
+| **AndroB2O** | 2025 ASE | Univ. of Minnesota | 功能失败的 oracle "creation… remains" 缺自动化 | 从 bug 报告生成断言式 oracle；首个数据集 | 报告 + 出错屏 → 相关控件 → 断言 | 152 失败，61.2% 可识别（仅摘要） | 全文未打开 | 从"点出 bug"挪到"写成断言" |
+| **ScenGen** | 2026 TOSEM（ASE 2026 journal-first） | TUM Heilbronn / 南京大学 | 测试与 "underlying app business logic" 有缺口 | 场景驱动多智能体；CV+MLLM 控件定位 | 五角色闭环，Supervisor 核对并回滚 | 99 任务完成率 84.85%；定位 97.76% | 自认：场景有限、不稳定 / 我们：场景人给，bug 数未确认 | 覆盖率高 ≠ 业务做完 |
+| **TUSR** | 2026 FSE | 南京大学 | 界面与交互改变 "render scripts… obsolete" | 首个按测试单元修复脚本的框架 | MLLM+规则切分 → 按单元 CoT 修复 + 反思 | 262 脚本；动作 95% / 脚本 89% | 自认：切分难 / 我们：无成本报告 | 一个意图由一串动作完成，不能逐步修 |
+
+### 从 B 表能读出的
+1. 主流叙事从"LLM 探索提覆盖"（GPTDroid、LLMDroid）转向"**LLM 当 oracle**"（VisionDroid、AUITestAgent、AndroB2O、GUIPilot）。
+2. 中科院软件所 Zhe Liu / Qing Wang 组一条线贯穿 OwlEye→Nighthawk→GPTDroid→VisionDroid→BugHunter，是这个方向最该先读的组。
+3. 鸿蒙相关的工作很少，且都是测试生成或迁移（HmTest、2607.11245）；**鸿蒙上的显示缺陷检测几乎空白**，只有 HCO-Eye 做重叠。
 
 ## C. 非崩溃功能 bug oracle
-见 `raw/oracle-non-crash.md`，待核实后并入本表。
+见 `raw/oracle-non-crash.md`。B 表已核实其中两篇：VisionDroid（TSE 2025）、AndroB2O（ASE 2025）。
+
+---
+
+## D. 对 Testing-Survey 的评价（和师妹语音时可以照着说）
+
+**现状**：catalog 只有 6 列（编号、标题、年份、venue、对应问题、笔记链接），4 篇里 3 篇是综述，最新的实证论文缺失；notes 每篇 235–371 行，`field.md` 1,393 行概念教程。
+
+**问题**：
+1. 读综述多、读原始论文少，看不出"别人具体怎么做、差在哪"；
+2. 单篇笔记太长，没人会回头读，也没法横向比较；
+3. 没有机构、动机原文、gap、叙事这些列，没法用来找选题。
+
+**建议**（说的时候用商量语气）：
+1. 以本表为模板，主表放在 `catalog.md`，每篇一行；单篇笔记变成可选，限 50 行以内；
+2. 只收 2024–2026 的原始论文，综述只留 1–2 篇当入口；
+3. 分工：她负责按模板填 B、C 两类新论文，每周 3–5 篇；动机和贡献必须贴原文，venue 必须在 DBLP 或会议页核实；
+4. 每两周一起看一次表，只讨论 gap 列。
