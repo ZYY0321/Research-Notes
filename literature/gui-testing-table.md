@@ -1,5 +1,7 @@
 # GUI 测试文献大表（demo）
 
+> 其他方向的表：`cua-table.md`（CUA/GUI Agent）、`ai-posttraining-table.md`（RL/自进化/强教弱/奖励模型）、`se-for-ai-table.md`（代码智能体/可执行环境）、`se-nontesting-table.md`（架构/评审/质量/供应链/鸿蒙）。
+
 列说明：动机/贡献尽量保留原文措辞；gap 分"作者自认"和"我们看到"。UNVERIFIED = 未在全文核对。
 来源：子代理逐篇打开全文/PDF 抽取，venue 与数字以全文为准（会议摘要页与全文不一致处已注明）。
 
