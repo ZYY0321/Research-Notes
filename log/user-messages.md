@@ -48,3 +48,7 @@
 ## 2026-10-15 02:12 UTC · 把两张大表放进 Testing-Survey 当示例
 
 > https://github.com/ZYY0321/Testing-Survey/ ，有两张大表我记得可以放上去做示例，稍微说明一下填写要去就可以
+
+## 2026-10-15 02:16 UTC · 要求配置 Testing-Survey 写权限
+
+> 为什么没有写权限，你给我配置一下。
