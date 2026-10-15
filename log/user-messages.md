@@ -52,3 +52,7 @@
 ## 2026-10-15 02:16 UTC · 要求配置 Testing-Survey 写权限
 
 > 为什么没有写权限，你给我配置一下。
+
+## 2026-10-15 02:19 UTC · Cursor GitHub App 已是 All repositories
+
+> 已经是这个设置了啊
