@@ -1,41 +1,169 @@
-# OpenGCUA: 面向"通用计算机使用代理"的全开源技术栈报告
+# OpenGCUA：面向"通用计算机使用智能体"（GCUA）的全开放技术栈报告
 
 ## 开会速记
 
-- 阿里团队给"计算机使用代理(CUA)"提出一个新的统一定义——**GCUA(通用计算机使用代理)**：模型在每一步自主决定"观察什么、怎么动作、怎么组织工作"，并证明现有的GUI-only代理、CLI代理、多代理分工系统、以及作者自己之前的GUI+CLI批量动作代理(Qwen-UI-Agent)都只是这个框架里"预先固定了某些决策"的特例。
-- 核心设计是让模型把GUI点击(pyautogui)、Shell命令(bash())、Accessibility树操作写成**一段可执行Python程序**（而不是预先列好的动作列表），并让模型自己决定何时要截图、如何维护任务状态——称为"harness-to-model decision transfer"。
-- 证据是**经验性消融实验**，不是新训练模型：在OSWorld-v2的82任务离线子集上，对GPT-6 Astra、Claude Opus 5等8个前沿模型，完整OpenGCUA配置相比"GUI-only批量动作"基线，平均partial score提升19.6分、步数减少53.0%。
-- 在4个真实macOS任务的小规模探索中，发现不同模型real-device执行效率差异巨大(Qwen3.8-Max推理token是GPT-6 Astra的19.4倍但完成更少)，但作者自己说明这只是"4任务、多为单次运行"的探索性证据，不能当稳定排名。
-- 本文不检测UX/显示缺陷，其oracle是任务完成度评测脚本；但其"代码执行+结构化观测做可执行校验"和"按需截图"的harness设计思路，对我们UX-Agent的布局树复核/滑动探测时机设计，以及OpenMobile-2的GUI+MCP混合动作空间设计，有方法论参考价值。
+- 这是阿里巴巴的一份**技术报告**（非训练新模型），核心贡献是提出"通用计算机使用智能体"（GCUA）的形式化定义，并设计了一套可插在现有前沿模型外面的**执行框架**（code execution + harness-to-model decision transfer），在 OSWorld-v2 离线 82 任务集上，对 8 个前沿模型全部测试后，**平均 partial score 提升 19.6 分，平均步数降低 53.0%**，证据来自可复现的公开轨迹和消融实验，强度较高但样本仅限该基准、且不含新训练模型。
+- 核心技术点：（1）让模型把 GUI 点击、Shell 命令、accessibility 操作写成**一段可执行程序**（而非固定的批量动作列表），利用程序内的循环/条件/变量在一次模型调用内完成原本需要多轮交互的任务；（2）**harness-to-model 决策转移**——让模型自己决定何时要截图、如何维护任务状态（todo ledger），而不是由固定规则（每步截图）决定。
+- 真机（非 benchmark）实验規模很小（仅 4 个 macOS 任务、单次或少量重复），发现模型间差距极大：Qwen3.8-Max 在真机任务上用了 **19.4 倍**于 GPT-6 Astra 的推理 token，但完成任务更少，说明 benchmark 分数不能代表真机可用性。
+- 与我们课题的关系是**间接但有参考价值**：论文不检测任何 UX 显示缺陷（截断/遮挡/重叠/溢出完全不在其研究范围），但其"视觉观察+结构化 accessibility tree 互补"的设计思路、"按需截图而非每步截图"的效率优化思路，以及真机环境（共享控制、背景窗口、变化屏幕）的挑战清单，对我们 UX-Agent 的布局树复核设计和未来真机部署都有直接的可借鉴之处；其 GUI+CLI/API 混合动作空间的形式化，也可为 OpenMobile-2 的 GUI+MCP 动作设计提供参照框架。
 
 ## 一页读懂
 
 | 维度 | 内容 |
 |---|---|
-| 旧方法哪里不够 | 现有CUA研究多把问题框定为"GUI-only"操作(截图+鼠标键盘)，而前沿系统(如GPT-6 Astra)已转向GUI+Shell+代码执行+API混合，但闭源，模型权重、prompt、real-device harness、执行轨迹均不公开，社区无法复现、对比设计选择(Sec 1)。 |
-| 本文新增 | (1) 提出GCUA形式化定义(Eq 1)，把GUI/CLI/多代理/GUI+CLI批量动作代理统一为该框架特例(Table 1)；(2) 提出"harness-to-model decision transfer"机制(按需截图、todo任务状态、intent标注)；(3) 公开OpenGCUA实现、prompt、8个前沿模型的评测轨迹；(4) 发布preliminary的real-device harness与Cross-Device SDK。 |
-| 输入/输出 | 输入=任务指令+系统prompt+交互历史(模型自选的screenshot/AX tree+程序执行输出)；输出=模型每步生成的一段Python代码(可混合pyautogui/bash()/AX操作/API调用，含循环分支)，由harness执行、把stdout/stderr/screenshot等反馈返回模型，循环至模型调用terminate()。 |
-| 怎样验证 | OSWorld-v2(v2.1) 82任务离线子集，8个前沿模型，对比GUI-only batched基线与OpenGCUA全配置，并做code execution、harness-to-model decision transfer各组件消融；另在4个真实macOS任务上用preliminary real-device harness比较模型效率与完成度。 |
-| 结论边界 | 本次release不含训练模型，只是用现有前沿模型做agent设计的经验性验证(Sec 5.1)；real-device结果仅4任务、多为单次选定运行，作者自己说明"characterize the evaluated configurations rather than establish a general model ranking"(Sec 4.3.3)；不涉及显示类(UX)缺陷检测，oracle是任务级评测脚本。 |
+| 旧方法不够在哪 | 现有 GUI-only 计算机使用智能体（CUA）把模型限制为"看截图—点一个坐标"的固定循环，动作、观察、工作状态组织方式都由开发者写死的 harness 规则决定；前沿闭源系统（如 GPT-6 Astra）虽已转向"GUI+代码执行"的混合范式，但模型权重、prompt、真机 harness、设备控制 SDK、执行轨迹均不公开，社区无法复现、比较、研究其设计选择（原文 Sec 1）。 |
+| 本文新增 | （1）提出 GCUA 的形式化定义：智能体在每一步做三个决策——观察什么（what to observe）、怎样行动（how to act）、怎样组织工作（how to organize），并证明现有 GUI agent、CLI agent、多智能体混合系统、以及作者自己此前的 Qwen-UI-Agent（GUI+CLI 批量动作）都是该定义下"预先固定部分决策"的特例（Sec 2）。（2）把这个定义落地为 OpenGCUA 执行框架：code execution（把 GUI 操作、Shell 命令写成一段可执行程序）+ harness-to-model decision transfer（按需截图、todo ledger、action intent、harness 管理的上下文策略）。（3）开源真机（macOS）harness 的早期版本与跨设备 SDK 的早期版本。（4）公开 8 个前沿模型在 OSWorld-v2 上的完整评测轨迹。 |
+| 输入/输出 | 输入：任务指令 + 当前计算机状态的观察（截图、accessibility tree、命令行输出、API 响应的任意组合，由模型自己挑选）。输出：模型生成的一段 Python 程序（可能混合 GUI 动作、Shell 命令、accessibility 操作、API 调用，含循环/条件/变量），由 harness 的运行时执行，执行反馈（stdout/stderr/截图）回传给模型，循环直至模型调用 terminate()。 |
+| 怎样验证 | 主实验：OSWorld-v2 离线子集（82 任务，v2.1 版本，剔除需要联网的 26 个任务），8 个前沿模型，对比"GUI-only + 批量动作"基线与"完整 OpenGCUA"配置；辅助消融：code execution 单独作用、harness-to-model 各机制单独作用；真机实验：4 个 macOS 任务（workbook 推理、PDF 表单填写、购物调研、酒店比价），少量模型、单次或最多三次运行。 |
+| 结论边界 | 结论仅建立在 OSWorld-v2 离线子集与 4 个自建真机任务上，真机任务数量极小（4 个任务），作者自己承认时间对比（wall-clock）因 API 带宽、并发环境数、供应商排队等未受控，只能作为"探索性证据"（Sec 3.3.6）；本报告不包含任何训练模型，所有提升均来自"给现有闭源/开源前沿模型换一套执行框架"，不涉及模型能力本身的改进；不涉及任何 UX 显示类缺陷（截断、遮挡、重叠、溢出）的检测。 |
 
-> catalog.md 建议记录行：OpenGCUA | 2026 | llm | preprint | execute | method/harness/empirical | desktop | hybrid(llm-prompt) | spec | OSWorld-v2 82任务 | 全配置较GUI-only batched基线partial score+19.6分/步数-53.0%(8模型)
+对应 [catalog](../catalog.md) 的一行记录：OpenGCUA | 提出 GCUA 形式化定义 + code execution/harness-to-model decision transfer 执行框架，OSWorld-v2 上对 8 个前沿模型平均 partial score +19.6，steps -53.0%；真机任务仅 4 个，模型间推理 token 差距达 19.4 倍 | method/empirical | 2026 | preprint
 
 ## 一段话介绍
 
-这篇报告研究的不是"GUI缺陷检测"问题，而是"计算机使用代理应该如何设计执行机制"这一GUI(及程序化接口)任务执行问题：作者认为计算机使用正从"只用鼠标键盘操作GUI"转向"GUI+Shell+API混合、甚至直接写代码"，但前沿闭源系统(GPT-6 Astra等)不可复现，因此提出"通用计算机使用代理(GCUA)"的统一定义——模型在每一步自己决定观察什么、怎么动作、怎么组织工作——并构建一套开源的OpenGCUA harness，让现有前沿模型可以使用代码执行(把GUI操作、Shell命令写成同一段Python程序)和"harness-to-model decision transfer"(模型自己决定何时截图、如何记录任务状态)。证据主要来自OSWorld-v2基准上对8个前沿模型的批量消融实验(任务完成分数、步数、token消耗)，以及在4个真实macOS任务上的探索性real-device对比；论文没有训练新模型，评价的是"agent执行设计"本身而非UX/显示缺陷检测能力。
+这篇报告研究的问题是：当"计算机使用智能体（CUA）"从单纯操作 GUI（看截图、点鼠标）演变为可以同时使用图形界面与编程接口（Shell、accessibility API、服务 API）完成真实计算机任务的"通用计算机使用智能体（GCUA）"时，应当如何设计这样的系统——具体是模型在每一步该自己决定看什么、怎么做、怎么组织工作，还是应当被 harness 的固定规则限制。作者先给出一个形式化定义，把现有的 GUI agent、CLI agent、多智能体混合系统都纳入同一个框架里作为特例；然后提出两个具体机制——让模型把 GUI 操作和程序代码写成一段可执行的程序（而不是预先定好的一串动作），以及把原本由 harness 规则固定的"要不要截图""怎么记录任务进度"等决策转移给模型自己。证据主要是在 OSWorld-v2 这个计算机使用任务基准（离线 82 任务子集）上，对 8 个前沿模型（含 GPT-6 Astra、Claude Opus 5 等）做"GUI-only 批量动作基线 vs 完整 OpenGCUA 配置"的对比和多组消融实验，另外还在 4 个自制的真实 macOS 任务上做了小规模真机测试，用执行步数、输出 token 量、推理 token 量、估算美元成本等效率指标，加上基准自带的部分分和完全成功率，来评估这套设计的效果。
 
 ## 关键术语与阅读前提
 
-- **CUA (Computer-Use Agent，计算机使用代理)**：通过视觉或程序化接口操作计算机完成任务的智能体，原文的研究对象(Sec 1)。
-- **GCUA (Generalist Computer-Use Agent，通用计算机使用代理)**：本文新定义的一类CUA，由模型在每步做"观察/动作/组织"三项决策(Sec 2.1)，可链接 ../glossary.md 的"agent"条目补充理解。
-- **AX Tree (Accessibility Tree，无障碍树)**：操作系统/应用暴露的控件层级结构(角色、名称、值)，可直接按元素操作、无需坐标(Sec 2.1)。类比我们UX-Agent中的"ArkUI布局树"。
-- **batched actions (批量动作)**：模型一次调用生成固定的多个动作序列(如作者此前Qwen-UI-Agent的做法)，与code execution相对，是"没有控制流的程序"(Sec 2.3)。
-- **code execution (代码执行)**：模型把GUI操作、Shell命令写成一段带循环/分支/变量的Python程序，由harness一次性执行(Sec 2.3, 3.1)。
-- **harness-to-model decision transfer**：把原本由harness固定规则决定的工作流决策(如"每步后截图")转移给模型自己判断(Sec 3.2)。
-- **OSWorld-v2**：桌面计算机使用任务基准，本文使用其v2.1版82任务离线子集（排除需联网的26个任务）(Sec 3.3.1, Appendix A)。
-- **partial score / success(完成率)**：评测器给出的0–100分部分完成度，及归一化分数>0.999999记为完全成功(Appendix A)。
-- **cache hit rate (缓存命中率)**：输入token中由提示缓存命中服务的比例，用于衡量上下文管理效率(Table 4)。
+- **CUA（Computer-Use Agent，计算机使用智能体）**：通过截图观察和鼠标键盘动作操作图形界面完成计算机任务的智能体，是本文讨论的起点范式。参见 ../glossary.md 中"GUI agent"相关条目。
+- **GCUA（Generalist Computer-Use Agent，通用计算机使用智能体）**：本文提出的核心概念，指模型在每一步自主决定"观察什么、怎样行动、怎样组织工作"，可综合使用 GUI、accessibility tree、CLI、API 四种接口完成任务的智能体系统（Sec 2.1 定义）。
+- **Code execution（代码执行）**：模型把一步要做的操作写成一段可运行的 Python 程序（内含 GUI 调用如 pyautogui.click()、Shell 调用 bash()、以及循环/条件/变量），而非预先固定好的一串独立动作（batched actions）。
+- **Harness-to-model decision transfer（harness 到模型的决策转移）**：本文作者自创术语，指把原本由 harness（执行框架/运行时）用固定规则做出的决策（如"每步都截图""如何压缩历史上下文"）逐步转移给模型自己判断的设计思路。
+- **Harness（执行框架/运行时环境）**：负责接收模型输出的程序、执行它、采集反馈（截图、命令输出）并构造下一步输入的系统组件，区别于模型本身。
+- **AX Tree（Accessibility Tree，无障碍树）**：操作系统/应用暴露的控件层级结构（角色、名称、取值等），智能体可以直接读取并对元素操作，无需屏幕坐标。与我们课题中 ArkUI 布局树概念类似但非同一体系。
+- **OSWorld-v2**：一个计算机使用任务基准（文中用 v2.1 版本的离线 82 任务子集），提供评分函数（partial score/success）。
+- **Partial score / Success**：OSWorld-v2 的两种评估指标，partial score 是 0–100 的部分完成度评分，success 是完全成功任务的百分比（normalized evaluator score > 0.999999，见附录 A）。
+- **Cross-Device SDK（跨设备编程接口）**：本文提出的、让一个智能体程序统一操作计算机/浏览器/手机的编程接口（偏好工程实现，非检测机制）。
+- **Todo ledger（任务状态记录）**：模型通过 todo.update()/todo.list() 维护的持久化任务进度记录，状态包括 pending、attempted、changed_unverified、claimed_verified、blocked。
 
 ## 动机
 
-作者在引言中指出：目前大量文献把CUA研究问题设定为"模型通过截图+鼠标键盘能多好地操作GUI"(Sec 1, 引用Qin et al. 2025; Lu et al. 2026)。但前沿系统(如GPT-6 Astra)已经把GUI交互和Shell命令、Accessibility树访问、其他工具结合起来，OpenAI甚至在文档中建议"把GUI操作写成代码，和程序化操作合并到同一次模型输出里"(Sec 1, 引用OpenAI 2026b)。这些系统面向用户自己的真实计算机，其中"共享控制、与后台窗口交互、需求不断变化"等挑战是基准测试没有完全覆盖的(Sec 1)。于是问题从"模型操作GUI界面的能力如何"变成"系统用任何有效手段在真实计算机上完成工作的能力如何"。但GPT-6 Astra等前沿实现"largely closed"——模型权重、完整prompt设置、real-device harness、设备控制SDK和执行轨迹都不可得，限制了社区复现、比较不同设计、研究设计选择对任务完成和成本影响的能力(
+作者指出，2026 年前后计算机使用智能体的研究重心正在发生"路线翻转"：以往大量文献把 CUA 当作纯 GUI agent 来研究，只问"模型通过截图观察、鼠标键盘动作能多好地完成计算机任务"（原文 Sec 1 引用 Qin et al., 2025; Lu et al., 2026）。但最新的前沿系统（如 GPT-6 Astra）已经把 GUI 交互与 Shell 命令、accessibility tree 访问等工具结合起来，OpenAI 甚至在官方文档中建议模型把 GUI 操作写成代码（如用 PyAutoGUI、Playwright），与程序化操作一起放进单次模型输出中（原文引用 OpenAI, 2026b）。这些系统还直接面向用户自己的真实计算机，这里存在"共享控制权、操作后台窗口、请求内容在执行过程中变化"等基准任务完全没有覆盖的挑战。
+
+作者把这个现象总结为："问题已经从'模型操作 GUI 界面的能力有多强'变成了'系统通过任何可行方式在真实计算机上完成工作的能力有多强'"（原文 Sec 1）。这促使他们借鉴 Agents' Last Exam（Sun et al., 2026）的系统级视角，提出用 GCUA 这个术语来刻画这类更广泛的系统，GPT-6 Astra 的计算机使用系统被视为一个代表性的 GCUA 案例。
+
+真正的障碍在于：如何设计这样的系统是一个开放问题——给模型哪些接口、如何支持代码执行、哪些决策应留给模型、哪些应留给 harness、当智能体运行在用户自己计算机上时会有什么变化——这些都尚无系统性研究；而前沿系统（GPT-6 Astra 等）"仍然在很大程度上是闭源的"，其模型权重、完整 prompt 设置、真机 harness、设备控制 SDK 和执行轨迹都不可获得，这限制了社区复现系统行为、比较备选设计、研究设计选择如何影响任务完成度和成本（尤其是在真机条件下）的能力（原文 Sec 1："This limits the community's ability to reproduce system behavior, compare alternative designs, and investigate how design choices and execution mechanisms affect task completion and cost, particularly under real-device conditions."）。
+
+（教学例子，非论文案例）类比地想象在 HarmonyOS 上做自动化测试：如果一个测试智能体永远只能"看一张截图→点一个坐标→再看下一张截图"，那么对付"滑动列表、检查某个文本是否完整显示、再回滚状态"这种需要条件判断和循环的任务，就必须把每一次判断都拆成一次独立的模型调用，既慢又容易因为中间状态变化而出错——这正是本文想要解决的那类"批量动作/纯 GUI 执行"的局限性在概念上的类比，但论文本身讨论的是通用计算机任务（办公软件、浏览器、文件系统），并非移动端 UX 缺陷检测。
+
+## 贡献
+
+作者在 Sec 1 末尾以项目符号的形式明确列出以下贡献（保留原文编号逻辑，文中为非编号列表，这里按出现顺序编号）：
+
+1. **（概念贡献，problem/归纳）GCUA 泛化了现有的 GUI、CLI、混合智能体**：用模型在每一步做出的三个决策（观察什么、怎样行动、怎样组织）定义 GCUA，并证明 GUI agent、CLI agent、多智能体混合系统、以及 GUI+CLI 的 Qwen-UI-Agent 都各自预先固定了部分决策，是 GCUA 的特例（Sec 2）。
+2. **（方法+实验贡献）GCUA 在所有被测前沿模型上都超过了 GUI-only CUA**：把 GCUA 设计实现为 OpenGCUA harness，使现有模型能用代码执行与 harness-to-model decision transfer；在 8 个前沿模型（含 GPT-6 Astra、Claude Opus 5）上测试，OSWorld-v2 离线子集上完整 GCUA 设置使平均 partial score 提升 19.6 分，每任务步数减少 53.0%，并把最强与最弱模型之间的分数差距缩小超过一半；公开了实现代码、prompt 与 8 个模型的评测轨迹（Sec 3）。
+3. **（实验贡献）代码执行比单纯拥有 Shell 访问权带来更多价值**：在相同的 GUI 和 Shell 访问权限下，把 GUI 操作写成代码并与程序化操作组合，相对 GUI+CLI 基线额外提升 6.1 分 mean partial score，每任务步数减少 14.8%；并通过案例研究识别出五种反复出现的代码执行模式（Sec 3.1）。
+4. **（方法贡献）随着模型变强，harness 的控制权应逐步转移给模型**：提出 harness-to-model decision transfer，当前实现中模型决定何时请求截图、如何追踪任务状态，并在执行每段程序前陈述其目的；仅"按需观察"这一项机制就使两个模型的缓存命中率分别提升 10.5 和 14.4 个百分点，且没有降低任务分数（Sec 3.2）。
+5. **（实验贡献）真机上模型间差距巨大**：发布面向用户真实计算机的早期真机 harness，应对基准未覆盖的挑战（如与用户共享机器、操作后台窗口）；在 harness 固定的情况下，Qwen3.8-Max 在 4 个真实 macOS 任务上使用了 GPT-6 Astra 19.4 倍的推理 token，总输出 token 是 5.7 倍（Sec 4）。
+6. **（工程/系统贡献）一个统一的计算机、浏览器、手机编程接口**：早期版本的 Cross-Device SDK 把每个操作绑定到显式的设备/应用/窗口/标签页，把 accessibility 与视觉作为两种独立的观察与行动方式，并允许一个程序在一个任务中协调多个设备（Sec 4.2）。
+
+作者明确说明这份报告"不是项目的完成，harness 和 SDK 仍是早期版本"（Sec 1 末），并在 Sec 5 给出后续发布路线图。整体上，这是一份以"形式化定义 + 执行框架设计 + 对现有模型的系统评测"为主的方法/经验性报告，**没有**发布新训练的模型（Sec 5.1 明确说明"本报告的模型侧贡献是用现有模型做设计的经验验证，而非一个新训练的模型"）。
+
+## 方法
+
+### 整体思路
+
+OpenGCUA 的方法论可以概括为："先给出一个数学形式化，描述智能体在每一步要做哪三类决策；再说明现有各类智能体是如何把其中部分决策'写死'成规则的；最后提出一套具体机制，把这些规则尽可能转移给模型自己决定，并用代码执行把动作表示能力从'单个原语'升级为'带控制流的程序'"。整个方法不训练模型，而是设计一套可以套用在任意现成前沿模型外面的 prompt + 运行时（harness）组合。
+
+### 1）输入是什么、怎样表示
+
+GCUA 的输入在形式化中被定义为 $(m_t, o_t)$：$m_t$ 是智能体在第 $t$ 步时维护的"工作状态"（包含计划、进度记录、保留在上下文中的历史观察），$m_0$ 中包含任务指令；$o_t$ 是上一步返回的观察。观察 $o_{t+1}$ 由两部分构成（原文 Eq.2）：
+
+$$o_{t+1} = (e_t, \{v_q(s_{t+1})\}_{q \in q_t})$$
+
+其中 $e_t$ 是程序 $p_t$ 执行产生的执行输出（如命令行输出、API 响应），$\{v_q(s_{t+1})\}_{q\in q_t}$ 是模型在上一步主动请求的视图集合 $q_t \subseteq \mathcal{Q} = \{\text{screenshot}, \text{AX tree}\}$ 渲染出的具体内容。也就是说，模型收到的输入既包含它自己选择要看的截图/accessibility tree，也包含它上一步程序打印出来的文本结果，而 CLI/API 的输出是自动返回的。
+
+### 2）中间模块怎样处理，模型具体收到什么
+
+在 OSWorld-v2 的实现中，系统 prompt（附录 C.3 完整复现）规定模型每一步必须输出一个 `<code>...</code>` 代码块（完整 harness-to-model 设置下前面还要加一句简短的 `<intent>...</intent>`），代码块里是一段 Python，运行时预先注入了 `pyautogui`（坐标归一化到 [0,1000]×[0,1000]）、`time`、`os`、`bash(cmd, timeout=120, echo=True)`（执行 Shell 命令，返回带 `.stdout/.stderr/.returncode/.ok` 的对象）、`screenshot()`（请求下一步附带截图）、`terminate(status, answer)`（终止任务）、`ask_user(question)`（向模拟用户提问）等辅助函数。每个脚本作为全新的 Python 进程运行（跨步不保留变量），超时 300 秒自动终止，打印内容截断为 3200 字符（前 1200+后 2000）。真机 harness 的 prompt 额外加入 Playwright 浏览器接口说明（Sec 3.1.1）。
+
+harness 把模型生成的代码块提取出来做语法检查，然后在计算机环境中执行；执行反馈（stdout/stderr/执行状态）被回传给模型；若启用按需观察，输入中会附带模型通过 `screenshot()` 请求到的新截图；真机 harness 还会在模型请求时返回 accessibility tree 观察（Sec 3.1.1 "Execution Feedback"）。
+
+### 3）动作怎样选择、由谁执行、失败如何反馈
+
+动作的选择权在模型侧：根据形式化 Eq.1，$(q_t, p_t, m_{t+1}) \sim \pi_\theta(\cdot \mid m_t, o_t)$，模型在每一步联合决定三件事——要不要额外视图 $q_t$、要执行的程序 $p_t$（其语句调用 $\mathcal{A} = \mathcal{A}_{GUI} \cup \mathcal{A}_{AX} \cup \mathcal{A}_{CLI} \cup \mathcal{A}_{API}$ 中的原语，可含循环、分支、变量）、以及更新后的工作状态 $m_{t+1}$。与此相对，作者此前的 Qwen-UI-Agent（GUI+CLI 混合智能体）是这个公式的一个受限特例（Eq.3）：$q_t$ 固定为 $\{screenshot\}$，$p_t$ 是固定的动作序列 $(a_1,...,a_n)$（$a_i \in \mathcal{A}_{GUI}\cup\mathcal{A}_{CLI}$），$m_{t+1}$ 由固定的 harness 规则 $h$（如只保留最近 $k$ 张截图）决定——也就是说 GCUA 相对 GUI+CLI 混合智能体解除了三个约束：批量固定序列变成带控制流的完整程序、每步必截图变成按需截图、固定上下文规则变成模型自主组织。
+
+真机 harness（Sec 4.3.1）把执行链路拆成五层：模型（生成程序）→运行时（在持久化解释器中执行程序，变量/导入/工作目录跨轮保留，收集反馈，施加上下文保留策略）→设备 SDK（把观察与动作绑定到显式资源，如设备、窗口、浏览器标签页）→驱动（把 SDK 请求翻译为原生操作，包括 accessibility 动作和基于坐标的输入，管理元素身份和快照元数据，选择前台/后台动作交付策略）→应用与操作系统（决定可用的观察与控制能力，受权限、应用状态、accessibility 支持约束）。"可检测的执行失败会在发生处被上报；动作成功送达并不被视为任务级效果已经发生的证据"（原文 Sec 4.3.1）。
+
+失败反馈路径体现在：驱动层把可检测的原生失败作为带类型的错误返回，使智能体能区分"执行失败"与"需要进一步核查的结果"；在真机设计中，当低干扰方式（accessibility 元素级操作）不可用或无效时，智能体可以"升级"到更具干扰性的方式（窗口定向坐标输入，最后才是前台输入），在采取前台输入前应与用户协调（Sec 4.3.2）。
+
+### 4）判定依据来自哪里、哪些观察能支持结果
+
+这里需要特别说明：**本文不涉及"bug 判定"或"oracle"的设计**，它关注的是"任务完成"而非"缺陷检测"。任务是否完成由 OSWorld-v2 自带的评估器（evaluator）给出 partial score（0–100）和 normalized success（>0.999999 视为完全成功，见附录 A）。模型自身只能对任务状态做"自我评估"（如 todo ledger 里的 `claimed_verified` 状态），论文明确指出"这些记录反映的是模型自己的判断，而非独立的核验"（原文 Sec 3.2.1："These entries record the model's assessment rather than independently verifying the environment."）。文中案例研究里模型自己写的断言（如检查 64 个原始包条目是否未变、检查 125 道题是否全部填写）属于模型主动构造的"可执行验证"，但论文同样提醒"这些断言明确化了选定的保留性要求，但不能替代独立评估"（Sec 3.1.2，"Executable Verification"小节末）。
+
+### 5）何时停止，最终产物是什么
+
+智能体在代码块中调用 `terminate(status="success"|"failure", answer=None)` 来结束任务；若任务要求返回信息，答案写入 `answer`。最终产物是：(a) 对于 OSWorld-v2 评测，是修改后的计算机环境状态（文件、应用状态等），由外部评估脚本打分；(b) 对于本报告整体而言，"最终产物"是开源的实现代码、prompt、8 个模型的完整评测轨迹，以及早期版本的真机 harness 与跨设备 SDK（Sec 1 结尾列出的发布物）。
+
+### 一个完整例子（来自附录 D，论文原文案例）
+
+附录 D.1 给出了 GPT-6 Astra 在任务 003（用 GIMP 制作带透明度的雨/雪叠加幻灯片背景）上的 13 步成功轨迹：第 3 步构建带标签的联系表并打开 GIMP、调用 `screenshot()`；工具输出报告某叠加层 `filter5.png` 的 alpha 极值为 (0, 190)，据此在第 5 步选择 Normal/Screen 混合模式并执行 GIMP 批处理命令，生成两张 1920×1080 的合成图；第 7 步修改演示文稿的背景 XML；第 11 步重新打开文件检查透明度设置面板并截图核实；第 12 步用一段程序比较保存前后的 pptx 包，断言只有预期的条目发生变化、背景透明度字段正确（`a:alphaModFix amt=60000` 对应 40% 透明度的内部表示方式其实是 60% alpha，原文断言值如此）、其余 64 个原始包条目未变；工具输出报告 "PASS: slide 5 ... 40% transparency, original content intact" 等四条通过信息；第 13 步终止，该任务独立评估结果为 1.0（满分）。这个例子完整串起了"按需截图→代码执行组合 GUI 与 Shell→执行结果反馈→模型写断言自我核验→终止"的全流程。
+
+## 核心技术 / 方法论文详解
+
+本节逐一展开三块核心机制：（A）GCUA 形式化与分类，（B）代码执行的五种模式，（C）harness-to-model 决策转移的四个子机制，并说明各自对应的实验验证点。
+
+### A. GCUA 形式化与既有智能体的定位（Sec 2）
+
+形式化核心是 Eq.1：$(q_t, p_t, m_{t+1}) \sim \pi_\theta(\cdot \mid m_t, o_t)$。论文用 Table 1 把 GUI agent、CLI agent、多智能体混合系统、Qwen-UI-Agent（GUI+CLI）、GCUA 五类系统在"观察什么/怎样行动/怎样组织/接口选择"四个维度上逐一比较：
+
+- GUI agent：$q_t \equiv \{screenshot\}$（只看截图）；$p_t$ 是 $\mathcal{A}_{GUI}$ 中的单一动作；$m_{t+1}=h(m_t,o_t)$（harness 规则，如保留最近 k 张截图）；无接口选择。
+- CLI agent：$q_t \equiv \emptyset$（只看 $e_t$）；$p_t$ 是 $\mathcal{A}_{CLI}$ 上的程序；组织部分由模型承担一部分（如总结早期上下文）；无接口选择（仅 Shell）。
+- 多智能体混合系统：每个子智能体的 $q_t, p_t$ 被限定在其专属集合 $\mathcal{Q}_k, \mathcal{A}_k$ 内；接口选择由编排器（orchestrator）按子任务一次性决定。
+- Qwen-UI-Agent（GUI+CLI）：$q_t \equiv \{screenshot\}$ 加上命令输出 $e_t$（有命令运行时）；$p_t$ 是 $\mathcal{A}_{GUI}\cup\mathcal{A}_{CLI}$ 上的一批固定动作序列；$m_{t+1}=h(m_t,o_t)$（harness 规则）；接口选择由模型逐个动作地决定（点击或执行 Shell）。
+- GCUA：$q_t \subseteq \mathcal{Q}$（模型逐步选择），加上程序输出 $e_t$；$p_t$ 是覆盖全部四类接口的程序；$m_{t+1}\sim\pi_\theta$（模型决定）；接口选择精确到每一步，模型可组合使用多种接口。
+
+这个分类框架的价值在于把"是否有某个能力（如 GUI+CLI 都支持）"和"决策权在谁手里（harness 规则 vs 模型逐步决策）"区分开——作者在 Sec 2.1 举例说明："拥有全部五层（Agents' Last Exam 定义的 Brain/Eyes/Body/Hands/Feet）并不意味着这个 agent 会在二者之间做出良好选择；某一步它可能点十几屏才完成一个 shell 命令就能做的事，或者明明首先需要看一眼屏幕却直接跑了一段脚本"（原文 Sec 2.1）。这说明论文的分类贡献不是堆砌标签，而是给"谁来做决策"这件事提供了一个可以区分不同系统设计优劣的分析工具。
+
+### B. 代码执行的五种反复出现的模式（Sec 3.1.2）
+
+作者选取 GPT-6 Astra 在 OSWorld-v2 上的轨迹进行案例研究，识别出五种"程序把动作、中间结果、模型观察连接起来"的模式（作者强调这些是互补用法，不是互斥类别，也不是孤立的性能收益）：
+
+1. **跨接口组合（Cross-Interface Composition）**：单个程序内可以用一个接口得到的信息去指导另一个接口的操作。例：在合同生成任务中，智能体点击电子表格按钮、读取应用的完成状态、检查输出文件，只有这些检查通过后才点击第二个按钮创建本地邮件草稿，再程序化地检查草稿（Figure 3a）。
+2. **基于循环的执行（Loop-Based Execution）**：模型只需指定一次流程并在程序内对多个目标重复执行，循环次数/目标可在执行期间（如从文件内容或应用状态）确定。例：录制网站演示时，智能体对七个导航目标循环点击并通过 DOM 读取当前激活的 section，每次迭代都有断言检查匹配，整段循环无需中途返回模型（Figure 3b）。
+3. **结果依赖的执行（Result-Dependent Execution）**：程序可以检查命令输出或应用状态，并据此决定是否继续，这类可计算的判断可以留在程序内部而不必每次都交回模型解读。例：发送邮件回复前，程序比较界面草稿与保存版本（去除首尾空白后）文本是否一致，只有匹配时才点击"发送"，否则报告不匹配；但该程序执行记录仅走到匹配分支，"发送成功"本身并未在该步骤内被验证（Figure 3c，作者特意强调这一点——即执行验证的局限）。
+4. **观察准备（Observation Preparation）**：程序可以收集、裁剪、拼接多个视图为模型下一步判断做准备。例：检查一个三维物体时，智能体收集 25 个视角截图，裁剪相关区域并拼成一张编号的联系表，打开它并请求一次新的视觉观察（Figure 4a）。
+5. **可执行验证（Executable Verification）**：程序可以同时检查"应变化的内容"和"应保持不变的内容"。例：修改两张幻灯片背景后，比较原始与保存后的 pptx 包，检查预期的变化、验证其余 64 个原始包条目未变、比较背景元素之外的幻灯片内容（Figure 4b），作者明确说明"这些断言将选定的保留性要求显式化，但不能替代独立评估"。
+
+第二节也指出了**代码执行的局限**：当观察只能是截图（纯视觉反馈）时，结果依赖的控制流更难实现——"按钮是否可点"、"输入框是否包含期望值"等条件不能直接作为程序可读的值暴露出来，检查它们可能需要再调用一次模型（Sec 3.1.3）。这正是作者引入 accessibility tree 作为补充观察手段、并在真机 harness 中同时提供视觉与结构化观察的动机。
+
+### C. Harness-to-model decision transfer 的四个机制（Sec 3.2.1）
+
+1. **按需观察（On-Demand Observation）**：模型通过调用 `screenshot()` 决定下一步输入是否需要新截图；环境仍然会在每一步后拍摄截图（即环境记录不变），但该机制改变的是"模型收到什么"，而非"环境记录什么"。目的是减少携带信息量低的截图带来的上下文冗余。
+2. **任务状态追踪（Task-State Tracking）**：`todo` 接口让模型维护一份持久化的进度/事实/待解决问题记录，通过 `todo.update()` 更新、`todo.list()` 读取；状态区分 pending（待办）、attempted（已尝试）、changed_unverified（已改动未核验）、claimed_verified（声称已核验）等，帮助模型追踪还有什么需要检查，但这些条目反映的是模型自己的评估，不构成独立验证。
+3. **行动意图（Action Intent）**：模型在每段程序执行前输出一个简短的 `<intent>` 块，说明这段代码打算完成什么；一个程序可能组合许多操作，单看代码很难推断其整体目的；在真机使用中，harness 可以把这个说明展示给用户，帮助用户理解智能体此刻在做什么而不必读代码。
+4. **Harness 管理的上下文（Harness-Managed Context）**：harness 通过两个固定策略管理历史工具输出和截图——"滚动截图缓冲区"按批次移除较旧的图片（限制视觉上下文的同时减少对 prompt 缓存的破坏）；"微压缩（micro-compaction）"对文本类工具输出采用类似的滚动缓冲策略，按批次把较旧输出替换为简短占位符同时保留近期结果。这两项仍由 harness（而非模型）决定，是对模型决策的补充。
+
+这四个机制分别对应 Sec 3.3.5 的消融实验（见下节实验部分的 Table 4），其中按需观察主要提升缓存命中率，todo 主要提升任务分数，action intent 主要服务于用户可理解性（并非为了刷分，论文明确承认其分数略有下降），两个上下文策略主要服务于上下文长度控制与缓存复用之间的权衡。
+
+### 真机设计与 Cross-Device SDK（Sec 4）
+
+真机场景被归纳为五条基准未覆盖的挑战（Sec 4.1）：用户与智能体共享控制权（不能假设独占鼠标/键盘/焦点窗口）；屏幕持续变化（窗口会被其他无关应用打开/关闭/遮挡，智能体推理期间屏幕仍在变）；用户请求在执行过程中演变（用户可能澄清、纠正、追加约束）；观察与控制需要显式目标（任务相关的应用/窗口/标签页不一定在前台，全桌面截图只显示可见窗口组合而非每个可寻址目标的内容——论文举例："一个检查后台商品页的智能体，如果请求的是桌面截图而非所选标签页的图像，可能会收到一个不相关的登录页"）；任务从一个已存在的用户环境开始（不是预置好的干净状态，相关材料可能与无关内容或同名文件混杂）。
+
+针对这些挑战，Cross-Device SDK（Sec 4.2）设计了：共享词汇的操作但每个操作显式绑定到一个资源（设备/应用/窗口/标签页），资源句柄独立保持各自目标（切换新目标不会重定向早先的绑定）；一个任务会话内可组合多个资源的观察与动作并跨轮复用宿主端变量；`ui.ax`（结构化语义观察与基于元素的动作）与 `ui.vision`（图像与基于坐标的交互）分离暴露；观察捕获与向模型交付分离（`ui.ax.observe()` 把数据返回给程序，`mu.emit` 才把选定的观察或计算结果交付给模型），这样程序可以检查多个目标、用结构化结果决定后续操作，只把"模型下一步决策需要的信息"返回，不必每个中间结构化观察都触发一次模型调用；显式平台能力声明（通用 UI 操作共享接口，平台特有功能通过 `.android`、`.macos`、`.browser` 等命名空间保留）。
+
+真机 harness（Sec 4.3）的五层架构及四条设计响应（Sec 4.3.2）：最小化对共享机器的干扰（优先 accessibility 元素级动作，其次窗口定向坐标输入，最后才是前台输入，升级前台操作前应与用户协调）；显式选择观察（模型自己选何时看、看哪个目标，而非默认全桌面截图）；管理 accessibility 信息（过滤无关节点，把保留的层级表示为通过 `parent_id` 链接的扁平列表，用元素身份与快照版本支持引用追踪）；通过用户交互维持任务连续性（`ask_user` 接口支持澄清歧义目标、请求登录/验证协助、获取对有后果操作的授权）。
+
+## 实验
+
+本节实验分为五组：主对比（CUA vs GCUA）、GUI+CLI 混合 CUA vs GCUA、代码执行消融、harness-to-model decision transfer 消融、资源约束下的性能曲线，外加一组小规模真机实验。每组都先说明想回答什么问题。
+
+### 实验设置（Sec 3.3.1 & 附录 A）
+
+- **基准与任务集**：OSWorld-v2（v2.1）的离线 82 任务子集，由文件 `evaluation_examples/test_v2_offline_no_internet.json` 定义，剔除了需要外部联网访问的 26 个任务（保留本地 Web 应用和桌面任务），以使结果不依赖运行时外部网站的状态（遵循 GPT-6 Astra 发布时采用的评测协议）。
+- **模型**：Claude Opus 5、GPT-6 Astra、Gemini 3.8 Flash、Qwen3.8-Max、Qwen3.8-Flash、Kimi K3、DeepSeek-V4.1-Flash、GLM-5.3-Flash，共 8 个。
+- **执行配置**：CUA 基线 = GUI-only 交互 + 支持批量动作；完整 OpenGCUA 配置 = 代码执行（覆盖 GUI 与 Shell）+ 模型发起的工作流控制 + harness 管理的上下文策略。
+- **指标**：partial score（0–100，评估器部分完成度均值）、success（normalized evaluator score > 0.999999 的任务百分比）、steps/task（模型调用次数均值）、output tokens/task（含 reasoning tokens）均值。附录 A 说明：跨模型汇总时各模型等权重，分数增益按"分"平均，相对资源削减先在每个模型内部计算相对比例再取均值；若一次运行中同一任务有多次尝试，保留"最新一次有评估结果的尝试"而非"最高分的那次"。
+
+### 实验一：CUA vs GCUA（Table 2，Sec 3.3.2）
+
+**想回答的问题**：从"批量 GUI-only 执行"切换到"完整 OpenGCUA 配置"，对所有前沿模型是否都有一致的性能与效率提升？
+
+**结果**（表中数字均为论文原文 Table 2，Score 为 partial score，Steps/task 括号内为相对基线的变化百分比，Output K/task 单位为千 token）：
+
+| 模型 | GUI+batch Score | OpenGCUA Score（增幅） | GUI+batch Steps | OpenGCUA Steps（相对变化） | GUI+batch OutK | OpenGCUA OutK |
+|---|---|---|---|---|---|---|
+| Claude Opus 5 | 60.7 | 70.1（+9.4） | 103.1 | 61.4（-40.4%） | 378.3 | 89.3 |
+| GPT-6 Astra | 67.1 | 75.7（+8.7） | 102.1 | 33.5（-67.2%） | 30.8 | 31.9 |
+| Gemini 3.8 Flash | 50.1 | 67.0（+16.9） | 166.8 | 101.2（-39.3%） | 80.3 | 82.0 |
+| Qwen3.8-Max | 46.9 
