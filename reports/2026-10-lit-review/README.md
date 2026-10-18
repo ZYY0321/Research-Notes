@@ -53,7 +53,7 @@
 
 ### 2.2 本轮补齐：显示缺陷与 UX（与 UX-Agent 最近）
 
-经典锚点（汇报背景页必放）：
+经典锚点（汇报背景页必放；综述背景另加 Vision-Based Mobile App GUI Testing: A Survey，ACM CSUR 2026，arXiv 2310.13518）：
 
 | 论文 | 场合 | 关键数字 |
 |---|---|---|
@@ -94,7 +94,7 @@
 
 | 论文 | 场合 | 关键数字 |
 |---|---|---|
-| GUITester / GUITestBench | arXiv 2601.04500（ACL'26 Findings 待核） | 143 个任务、26 个缺陷；F1 48.90%（Pass@3），基线 33.35% |
+| GUITester / GUITestBench | ACL 2026 Findings（arXiv 2601.04500） | 143 个任务、26 个缺陷；F1 48.90%（Pass@3），基线 33.35% |
 | GUITestScape | arXiv 2605.29532 | 61 个应用、508 个预置缺陷；同时含交互与显示缺陷；GUIJudge 分能力诊断 |
 | MemoDroid | ASE'25 | 三层记忆；覆盖提升 79–97% |
 | TestWeaver | ASE'25 Industry | 美团部署：成功率 92%、每例 $0.11 |
@@ -270,7 +270,8 @@
 ## 7. 待核实 / 待补
 
 - [ ] OpenGCUA 全文精读（动作空间、训练、评测数字）——用 TokenHub one-shot。
-- [ ] GUITester 的 ACL 2026 Findings、AdverTest 的 ISSTA'26：去 ACL Anthology / researchr 确认。
+- [x] GUITester：已核实为 ACL 2026 Findings。
+- [ ] AdverTest 的 ISSTA'26：去 researchr 确认。
 - [ ] VisionDroid 场合：examples 写的是 TSE / ICSE'26，远端笔记写“未确认录用”，以远端为准，再查一次。
-- [ ] `raw/existing-verified.md` 中 19 篇只有 arXiv 页面上的作者自报场合，引用前去官网确认。
+- [x] 旧 97 篇已逐条核对（`raw/existing-verified.md`）：1 处编号写错（毕设《文献综述.md》把 2310.13518 写成 LLM Agent 综述，实际是 Vision-Based Mobile App GUI Testing: A Survey，现为 ACM CSUR 2026），19 处与仓库记载不一致（多为“写 arXiv、现已录用”，另有 CoMEM 的 NeurIPS'25、OS-Symphony 的 ACL'26 Main 查无录用），11 处改名（如 OpeFlo→Avenir-UX、SimuWoB→ScaleWoB）。旧文档未改动，引用时以核对表为准。
 - [ ] 2026-04 以前的 97 篇中，与本稿主线相关的（毕设表中的 GUI Agent 论文）是否需要进入汇报背景页。
