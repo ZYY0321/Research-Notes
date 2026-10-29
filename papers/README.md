@@ -21,3 +21,8 @@
 - AI 会议的录用规律：Testing-Survey 仓库 `reviews/`。43 条 OpenReview 投稿记录，含 Spotlight、拒稿的审稿要点。
 - 开合采集的实验、诊断和数据：`UX-Agent-data--collection` 仓库 `explore-research/`，从 `README.md` 开始看。
 - 两套叙事：`../answers/2026-10-27-两套叙事整合建议-opus5-5.md`。
+
+## 约束（2026-10-29）
+
+- **华为截断项目的数据和模型不能开源。** 可以自己重新收数据、用开源或 API 模型；华为那套只在内部当对照，结果可以报，数据不放出去。
+- 优先考虑不训练也能成立的方案：SE1 本来就可以不训练；AI1 的 DefectGym 投 D&B，可以不训练。
