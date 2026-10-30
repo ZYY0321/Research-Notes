@@ -168,7 +168,7 @@
 
 > 我今晚先用这种方法跑，尽可能多的收一批数据上来，收个大几百张自动完成然后后面用api打标，你觉得可行吗，打标要求就是按照之前我们制定的规则，那个会议汇报的时候有的。你要跑的所有软件我先去确认环境好不好，然后就晚上自动跑。~/.config/prod-mac/prod.sh ssh "要执行的命令"
 > ~/.config/prod-mac/prod.sh get 远端路径 本地路径
-> ~/.config/prod-mac/prod.sh put 本地路径 远端路径。密码1qaz@#，记得存好了，现在手机连在远程机器上
+> ~/.config/prod-mac/prod.sh put 本地路径 远端路径。密码（已脱敏，存在 ~/.config/prod-mac/askpass.sh），记得存好了，现在手机连在远程机器上
 
 ### 2026-10-28 18:49 UTC+8 · 为啥我看他老卡在同一个界面，然后还会显示截图标记，有截图标记
 
@@ -188,7 +188,7 @@
 
 ### 2026-10-29 08:17 UTC+8 · {"_type":"newapi_channel_conn"
 
-> {"_type":"newapi_channel_conn","key":"sk-9IzqS9wzEhBBjMsUWLp1rihBd8Bzg1xpFMfkCZmmoCgxCc3C","url":"https://tokenhub.sensetime.com"} 这个有的呀。Ops太贵了。嗯，然后他说什么黑屏，这个明显是截图他选取的图片有问题吧，黑屏。不在我们的那个规则里面，他怎么都算是有错的呢？就看我们的规则，只有几类是明确判是我们需要收上来的数据。
+> {"_type":"newapi_channel_conn","key":"（key 已脱敏，原值只在 .env）","url":"https://tokenhub.sensetime.com"} 这个有的呀。Ops太贵了。嗯，然后他说什么黑屏，这个明显是截图他选取的图片有问题吧，黑屏。不在我们的那个规则里面，他怎么都算是有错的呢？就看我们的规则，只有几类是明确判是我们需要收上来的数据。
 
 ### 2026-10-29 08:19 UTC+8 · 可以多开一些并发，8以上吧
 
