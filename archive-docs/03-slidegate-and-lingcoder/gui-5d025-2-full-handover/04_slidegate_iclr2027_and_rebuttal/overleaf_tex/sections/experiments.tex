@@ -1,0 +1,95 @@
+\section{Experiments}
+\subsection{Main Results: Six Commercial Systems}
+Table~\ref{tab:main} reports the six publicly available commercial presentation-generation services. The 240-output collection is distinct from the traceable comparison-score subset in Section~\ref{sec:screening}. Blocking-failure counts denote detected failures; the remaining decks are not necessarily confirmed negatives. Human ranks come from a Bradley--Terry ranking of 10 systems using anonymous pairwise comparisons by three professional designers. Only the six commercial systems are shown, so ranks are not consecutive.
+
+\begin{table}[t]
+\caption{Six-system results. Content denotes the content composite and vision the mean page score. Defect decks/pages include all four visual defect types. Blocking failures include instruction failures, missing content, and cropping/occlusion.}
+\label{tab:main}\centering\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lrrrrrrrr@{}}
+\toprule
+System & Human & HCR & Instr. & Content & Vision & Defect & Defect & Blocking\\
+ & rank & & fails & & & decks & pages & failures\\\midrule
+AnyGen & 1 & \textbf{.965} & 1 & .738 & .922 & 15 & 39 & 20\\
+Kimi & 2 & .952 & 2 & .757 & \textbf{.945} & 11 & 46 & 11\\
+Doubao & 3 & .954 & 5 & .687 & .896 & 25 & 62 & 20\\
+Manus & 4 & .879 & 14 & \textbf{.759} & .886 & 23 & 44 & 25\\
+MiniMax & 6 & .919 & 7 & .733 & .901 & 23 & 53 & 21\\
+Skywork & 8 & .964 & 4 & .724 & .899 & 28 & 82 & 27\\\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{System rankings differ across dimensions.}
+Manus has the lowest HCR (.879) and the most instruction-failure decks (14/40), while its content score is close to Kimi's: .759 [.711, .803] versus .757 [.708, .808]. AnyGen leads instruction following (.965), with content .738. Kimi leads mean visual score (.945), yet has 46 pages with visual defects, predominantly content-integrity issues. Skywork has the most visually defective pages (82) and the most blocking-failure decks (27/40). Scores and localized failure counts convey different information.
+
+\paragraph{Diagnostic baseline: multi-stage versus single-pass generation.}
+We compare a multi-stage pipeline with direct single-pass generation on the same 40 tasks using the same backbone. This pipeline is diagnostic, not a generation-method contribution. It extracts constraints and assets, plans the deck, renders pages, and checks the result; a failing page may be revised once. Task-paired HCR improves by .149 ($p=.0007$), instruction-failure decks fall from 15 to 1, and content improves by .137 ($p<.001$). Visual score changes by only .011 ($p=.59$). Dimensional reporting localizes the improvement to instruction following and content organization (Table~\ref{tab:paired}).
+
+\begin{table}[t]
+\caption{Same-backbone comparison: multi-stage minus single-pass generation. Paired differences use tasks with valid scores under both protocols and can differ from the difference of marginal means.}
+\label{tab:paired}\centering\small
+\begin{tabular}{@{}lrrrrl@{}}
+\toprule Dimension & Single-pass & Multi-stage & Paired diff. & $p$ & 95\% interval\\\midrule
+Instruction HCR & .822 & .973 & +.149 & .0007 & [.075, .222]\\
+Content & .677 & .817 & +.137 & $<.001$ & [.084, .191]\\
+Visual page score & .905 & .926 & +.011 & .59 & [$-$.016, .038]\\\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Ranking-Direction Conflicts}
+A comparison pair consists of two systems on the same task with valid scores in all three dimensions. On the historical complete subset of 193 decks from 33 tasks, the proportion with opposing ordering is 49.1\% for vision versus instruction (95\% interval [35.8, 63.2]), 40.2\% for vision versus content ([30.6, 50.0]), and 41.3\% for instruction versus content ([21.9, 63.3]). Within-task label-permutation baselines are 49.9\%, 50.0\%, and 50.2\%, respectively (Appendix~\ref{app:conflicts}). These rates are close to the baselines and do not establish a departure from independence. The evidence for complementary reporting instead comes from differing system rankings and the weak association between content scores and visual preference.
+
+\subsection{Screening for Blocking Failures with Existing Scores}
+\label{sec:screening}
+\paragraph{Scoring implementations and samples.}
+We apply local scoring implementations based on the published criteria of six evaluation frameworks to the same outputs, treating lower quality as higher failure risk. PPTBench-style uses an adapted local scale; the results characterize these implementations, not full reproductions of each original method. The common score ledger contains 235 decks: 35 from Kimi and 40 from each other system. The other five collected outputs are excluded from this comparison. Among these 235, 124 have at least one detected blocking failure, 82 are evaluable in all three dimensions with no detected failure, and 29 have no detected failure but incomplete judgments. The primary screening analysis uses the first two groups (206 decks), without treating unknown states as negatives. Failure labels come from SlideGate checks, not independent human deliverability labels.
+
+\paragraph{Evaluation protocol.}
+All six scores use identical samples, labels, and threshold-selection rules. AUROC uses negative quality as risk; 95\% confidence intervals use 3,000 task-cluster bootstrap samples. Leave-one-task-out screening holds out each task and all its system outputs, selects the strictest threshold attaining at least 90\% training recall on the remaining tasks, and applies it to the held-out outputs. Held-out labels do not determine thresholds. We aggregate all held-out predictions to compute recall and false-positive rate (FPR). The 90\% target is an illustrative screening setting, not an official passing standard of any framework or a guarantee of 90\% held-out recall.
+
+\begin{table}[t]
+\caption{Blocking-failure screening on 206 decks (124 positive, 82 negative). Confidence intervals use task-cluster bootstrap; recall and FPR use leave-one-task-out predictions.}
+\label{tab:screening}\centering\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}l l r r l@{}}
+\toprule Scoring scheme & AUROC [95\% CI] & Recall & FPR & TP/FN/FP/TN\\\midrule
+SlideAudit & .482 [.405, .565] & 100.0\% & 100.0\% & 124/0/82/0\\
+LecEval & .506 [.408, .602] & 92.7\% & 90.2\% & 115/9/74/8\\
+PPTBench-style & .665 [.593, .734] & 90.3\% & 78.0\% & 112/12/64/18\\
+PPTEval & .618 [.541, .690] & 89.5\% & 70.7\% & 111/13/58/24\\
+AutoPresent & .516 [.438, .590] & 89.5\% & 86.6\% & 111/13/71/11\\
+SlidesGen & .494 [.408, .582] & 89.5\% & 91.5\% & 111/13/75/7\\\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Detection and false alarms.}
+AUROCs span .482--.665; held-out recall of 89.5\%--100.0\% accompanies FPRs of 70.7\%--100.0\%. PPTBench-style has a failure-related ranking signal, with AUROC .665 [.593, .734]. Nevertheless, it detects 112/124 failures while flagging 64/82 negatives, yielding 90.3\% recall and 78.0\% FPR. High detection rates thus come with many false alarms, and quality scores do not replace concrete failure evidence.
+
+\paragraph{Initial grouping and sensitivity.}
+The initial analysis grouped all 235 outputs by detected failure versus no detected failure (124 versus 111). Five schemes showed no significant score difference; PPTBench-style did. However, the latter group included 29 unknown states. On the determinate 206-output subset, both PPTBench-style and PPTEval show significant uncorrected Mann--Whitney differences. We therefore use common-sample AUROC and held-out screening as the primary discrimination evidence, rather than interpreting nonsignificance as absence of ability. Restricting further to 186 decks with complete judgments in all dimensions (104 positive, 82 negative), PPTBench-style obtains AUROC .646 [.564, .720], recall 90.4\%, and FPR 86.6\%. Appendix~\ref{app:groups} gives the initial grouping results. Complete-case selection may still be biased, and this analysis does not resolve errors in the failure labels themselves.
+
+\subsection{Dimension Validation}
+\label{sec:validation}
+External references follow the evidence required by each dimension (Table~\ref{tab:validation}).
+\begin{table}[t]
+\caption{Validation references and results. Content agreement concerns judgments on a supplied checklist; visual rank agreement is at system level.}
+\label{tab:validation}\centering\small
+\begin{tabularx}{\linewidth}{@{}p{.14\linewidth}YY@{}}
+\toprule Dimension & Reference and scope & Main result\\\midrule
+Instruction & Programmatically checkable count/aspect constraints & 97.8\% agreement; count-failure recall 5/6\\
+Content & Two independent blinded annotators; source checks, reruns, perturbations & Annotator agreement 80.7\% / 85.6\%; inter-annotator $\kappa=.61$; rerun 97.3\%; Kendall .867; perturbation recall 90\%\\
+Vision & Three designers; BT ranks across 10 systems; approximately 300 blind pairs; 2,334 page annotations & Rank $\rho=.855$ ($p=.0016$); pairwise agreement about 70\%; exact defect agreement .780 (occlusion), .829 (image quality)\\\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{Instruction: objective constraints.}
+For slide count and aspect ratio, deterministic code verifies each output and provides an item-level reference. Agreement is 97.8\% on the code-checkable subset, with slide-count failure recall 5/6. Some instruction-failure labels in Section~\ref{sec:screening} come from these programmatic checks independently of the model evaluator. This validation does not extend to the remaining constraint categories.
+
+\paragraph{Content: human judgments and source evidence.}
+Two annotators independently label frozen-checklist items as pass/fail while blinded to system identity and evaluator outputs. Evaluator agreement is 80.7\% and 85.6\%, with inter-annotator Cohen's $\kappa=.61$. Cross-judge system-ranking Kendall correlation is .867; rerun agreement is 97.3\%; and target-item detection under controlled content perturbations is 90\%. These results validate judgments on supplied items, not whether the checklist omits requirements.
+
+\paragraph{Vision: human preference and defects.}
+Three professional designers provide anonymous pairwise preferences. Bradley--Terry ranks across 10 systems correlate with mean visual scores at Spearman $\rho=.855$ ($p=.0016$). An independent blind set of approximately 300 comparisons among the six commercial systems yields about 70\% human--evaluator direction agreement. Content scores have almost no correlation with the same preferences ($\rho=.029$), consistent with an appearance-focused protocol. The designers also annotate 2,334 pages for defects; exact evaluator--human agreement is .780 for occlusion/overlap and .829 for image quality.
+
+\subsection{Checklist Stability and Aggregation Policy}
+Candidate-to-frozen specification span-level $F_1$ is .974. Frozen contents match across systems for all 40 tasks, and repeated judgments agree on 95/96 items. These checks support consistent construction and reuse, but do not establish completeness or faithfulness. A three-dimension weight grid with step .1 yields 66 settings and 22 distinct full system rankings on the historical complete subset. We therefore default to separate dimensional results. Appendix~\ref{app:aggregation} retains the weight-grid and penalty analyses.

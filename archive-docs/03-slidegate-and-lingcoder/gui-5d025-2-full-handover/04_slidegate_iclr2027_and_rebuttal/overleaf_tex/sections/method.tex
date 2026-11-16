@@ -1,0 +1,54 @@
+\section{Evaluation Method}
+\subsection{Overview}
+The protocol has three stages. First, it extracts structured constraints and required content from each request and its parseable sources. To reduce omissions from a single extraction, three candidate specifications are independently generated, merged, critiqued, and adjudicated before freezing. \textbf{All systems solving the same task are evaluated against the same frozen specification.} Second, the evaluator checks every page against this specification and retains page numbers or content excerpts as evidence. Third, it aggregates judgments by criterion and returns scores, pass or coverage rates, and evidence lists. The procedure is independent of the particular task collection: new tasks with supported inputs require new specifications but reuse the same evaluation procedure. Table~\ref{tab:dimensions} summarizes the dimensions.
+
+\begin{table}[t]
+\caption{The three evaluation dimensions and their evidence.}
+\label{tab:dimensions}\centering\small
+\begin{tabularx}{\linewidth}{@{}p{.15\linewidth}YY@{}}
+\toprule Dimension & What is checked & Judgments and evidence\\\midrule
+Instruction following & Count/format, language, structure, mandatory items, template retention, edits & Frozen-item pass/partial/fail/NA; programmatic checks where applicable; hard-failure evidence\\
+Content quality & Required coverage, depth (presence/specificity/appropriateness), source faithfulness & Coverage and depth judgments; source-supported, derived, or unsupported claims\\
+Visual presentation & Four hard defects, six fine-grained criteria, three holistic criteria, cross-page consistency & Page screenshots, defect counts, and page scores\\\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Dimensions and Aggregation}
+The three dimensions address whether a deck meets the intended use without substantial revision. They are complementary: a severe failure in one dimension cannot be repaired by a high score in another. We use \emph{programmatic references} for constraints directly decidable from file properties or deterministic rules. A \emph{hard instruction failure} violates a predefined critical constraint. Blocking failures are the union of hard instruction failures, missing required content, and page cropping or occlusion. They are reported separately from aggregate scores.
+
+\subsubsection{Instruction Following}
+The instruction specification covers six categories: count and format, language, layout and structure, mandatory content, template retention, and additions or revisions to existing decks. Count and aspect ratio are checked programmatically; language can be detected programmatically; the remaining categories use the frozen specification and available evidence. Hard constraints and soft intent are aggregated separately. The hard-constraint rate is
+\begin{equation}
+\mathrm{HCR}=\frac{n_{\mathrm{pass}}+0.5n_{\mathrm{partial}}}{N^{\mathrm{instr}}_{\mathrm{judged}}},
+\end{equation}
+where $N^{\mathrm{instr}}_{\mathrm{judged}}$ excludes not-applicable (NA) items. Each hard failure is separately recorded and prioritized in the report, regardless of the other items' pass rate. For count and aspect ratio, code-derived judgments take precedence over model outputs.
+
+\subsubsection{Content Quality}
+Content evaluation measures required coverage, depth, and source faithfulness. Coverage items are labeled \emph{covered}, \emph{partial}, or \emph{missing}. Required source content is also extracted when parseable materials are part of the task. Only \emph{missing} items enter the blocking-failure definition. Depth uses three levels: L0 checks whether the information module exists, L1 whether it is concrete rather than generic, and L2 whether it meets the scenario's appropriate professional expectations. Their pass rates yield $S_{\mathrm{checklist}}$; more detail is not inherently better. Faithfulness checks whether source facts are accurately transferred, labeling claims as supported, derived, or unsupported.
+
+For tasks without parseable sources, only coverage and depth are scored. Sourced tasks additionally receive a faithfulness score $S_{\mathrm{fid}}$. Coverage and the content composite are
+\begin{align}
+C &= \frac{n_{\mathrm{covered}}+0.5n_{\mathrm{partial}}}{N^{\mathrm{cov}}_{\mathrm{judged}}},\\
+S_{\mathrm{base}} &= 0.70 S_{\mathrm{checklist}}+0.30 C,\\
+S_{\mathrm{content}} &=
+\begin{cases}S_{\mathrm{base}},&\text{without parseable sources},\\
+0.60S_{\mathrm{base}}+0.40S_{\mathrm{fid}},&\text{with parseable sources}.
+\end{cases}
+\end{align}
+NA items are excluded from $N^{\mathrm{cov}}_{\mathrm{judged}}$. Faithfulness adds evidence that coverage alone lacks: a deck can mention every required item while inventing the supporting numbers. Figure~\ref{fig:coverage} illustrates evidence-linked coverage.
+
+\begin{figure}[t]
+\centering\includegraphics[width=\linewidth]{figures/fig_m1_aggregation.png}
+\caption{The same frozen content items applied to two outputs of a training task. Item judgments retain evidence pages and yield deck-level coverage.}
+\label{fig:coverage}
+\end{figure}
+
+\subsubsection{Visual Presentation}
+Visual evaluation reports page scores and the number of pages exhibiting each defect. It distinguishes four binary hard-defect checks, six fine-grained design criteria scored 0/1/2, and three holistic aesthetic criteria scored 0--3 (Appendix~\ref{app:taxonomy}). Cross-page style consistency is assessed separately. Cropping and occlusion enter the blocking-failure union; all four defect categories remain in the visual diagnostic report.
+
+A page combines the normalized hard-defect pass rate $H$, fine-grained design score $S_{\mathrm{fine}}$, and holistic aesthetic score $G$:
+\begin{align}
+S_{\mathrm{page}}&=0.35H+0.40S_{\mathrm{fine}}+0.25G,\\
+S_{\mathrm{fine}}&=\max\left(0,\bar f_{\mathrm{raw}}-0.8\frac{d}{N}\right).
+\end{align}
+Here $\bar f_{\mathrm{raw}}$ is the normalized mean of the six fine-grained criteria, $d$ counts detected hard defects and fine-grained issues, and $N=10$ is the number of observed criteria (four plus six). Severe defects affect both $H$ and the penalty on $S_{\mathrm{fine}}$. Appendix~\ref{app:aggregation} reports the existing penalty ablation. Page-level counts preserve failures that a deck average may dilute.

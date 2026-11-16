@@ -42,10 +42,22 @@
 |---|---|---|
 | [`archive-docs/01-ux-agent/`](archive-docs/01-ux-agent/) | **华为 HarmonyOS 多设备 UX 检测系统 (`UX-Agent`)** | `design-specs/GUIAgent多设备UX检测系统-核心算法与代码对照详细设计说明书.md`（V2.0 视觉提案 + ArkUI 布局树静态复核 + 主动滑动与原位恢复）、`acceptance-specs/`（功能/模型性能验收说明与测试报告）、`docs/test-set/`（5 类设备单双三屏测试集与运行日志） |
 | [`archive-docs/02-cua-openmobile2/`](archive-docs/02-cua-openmobile2/) | **商汤 OpenMobile-2 / MobileGym++ (`cua过程文档` + `milestone文档`)** | `cua-process/`（63 Mock App 架构、333 Tools、215 锁定 Benchmark、Qwen-9B vs Gemini 3.1 `GUI-only vs Hybrid` 评测、弱探索+强接管数据合成、DAPO/RL 方案）、`milestone/`（组会周报、研究路线图、工具演进与论文写作计划） |
-| [`archive-docs/03-slidegate-and-lingcoder/`](archive-docs/03-slidegate-and-lingcoder/) | **M集群：SlideGate 幻灯片审校 & LingCoder 代码工作流** | `M集群/SlideGate_Survey.md`（PPT 生成与视觉审校综述）、`M集群/评测/`（DeckBench 指标设计、50 题构造、硬门控消融）、`M集群/给学姐/`（LingCoder 代码模型工作流对比与评测建议） |
+| [`archive-docs/03-slidegate-and-lingcoder/`](archive-docs/03-slidegate-and-lingcoder/) | **M集群：SlideGate 幻灯片审校、AgentV3 全链路蒸馏 & LingCoder 代码工作流** | `gui-5d025-2-full-handover/`（**2026-11-16 完整评测与训练蒸馏机交接包**：AgentV3 四层编排源码与 `State V3` 文档、1.6万条 SFT 六步清洗脚本、全轨迹 DPO 构造与排障、5.2万张图文版式蒸馏、SlideGate ICLR 2027 定稿 LaTeX 与 Rebuttal 全文）、`训练配置和启动指南.md`（LingCoder 30B MoE 32卡消融） |
 | [`archive-docs/04-prior-thesis-and-reviews/`](archive-docs/04-prior-thesis-and-reviews/) | **本科毕设、RealEval/SPA-Bench 论文草稿与个人复盘** | `thesis/毕设/`（GUI Agent 架构与技术研究、开题/答辩/文献综述）、`thesis/realbench草稿/`（RealEval / MobileBench-v2 / 轨迹级非二元评测草稿）、`internship-timeline/`（商汤实习全时间线） |
 
 > **安全与体积过滤说明**：为防止密钥泄露及仓库膨胀，已自动排除含账号密码/Token/远程连接码的 5 个敏感文件（`GITHUB账号.md`、`茶思屋ToDesk连接.md`、`给AI.md`、`2026-09-24__anon-repo-checklist.md`、`其他说明.txt`），以及 >5MB 的原始外部论文 PDF 和 `48ti附件汇总` 中的原始大图/PPTX 附件。
+
+---
+
+## 三（续）、求职面试全栈备战库（[`interview/`](interview/) · 2026-11 重构定稿）
+
+面向**大模型算法 / Agent Harness / GUI CUA / Agentic RL 后训练**岗位的完整背诵与技术深挖体系（入口见 [`interview/README.md`](interview/README.md)）：
+- **[`interview/00_自我介绍与四大项目全闭环/`](interview/00_自我介绍与四大项目全闭环/)**：1/2/3 分钟脱稿自我介绍 + 四大项目（AgentV3 & SlideGate、OpenMobile-1&2 / MobileGym++、macOS CUA & 鸿蒙 UX-Agent、LingCoder 30B MoE）端到端全闭环主线卡（拒绝回避式口径）。
+- **[`interview/01_项目架构与蒸馏训练硬核深挖/`](interview/01_项目架构与蒸馏训练硬核深挖/)**：源码级拆解 AgentV3 编排与 Box-Agent ACP 容器、五条数据蒸馏与 SFT/全轨迹 DPO 清洗构造、SlideGate 评测与 ICLR 2027 论文、CUA/OpenMobile/UX-Agent/LingCoder 硬核细节。
+- **[`interview/02_公开面经真题总表与逐题详解/`](interview/02_公开面经真题总表与逐题详解/)**：还原 20+ 场大厂真实面经题单，收录 **85 道高频真题（`Q01`–`Q85`）** 并逐题给出完整可背答案。
+- **[`interview/03_算法与大模型手撕极简题库/`](interview/03_算法与大模型手撕极简题库/)**：极简四要素（标题+题面+思路+代码）排版——**35 道 C++ LeetCode 高频真题 + 12 道 PyTorch/Python 大模型与 RL（GRPO/DAPO/GSPO/DPO/AgentLoop/GQA/RoPE/OPD/LoRA/BPE）手撕题**。
+- **[`interview/04_2025历史刷题资料解压精选与2026升级对照/`](interview/04_2025历史刷题资料解压精选与2026升级对照/)**：2025 历史压缩包与 `刷题.docx` 解压纯文本及 2026 演进对照表。
+- **[`interview/05_无GitHub与远程ClaudeCode同步协作指南.md`](interview/05_无GitHub与远程ClaudeCode同步协作指南.md)**：无 GitHub 机器离线/SSH 克隆回传方案与远程 Claude Code 实时可视化审阅工作流。
 
 ---
 
