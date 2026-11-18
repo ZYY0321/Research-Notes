@@ -41,7 +41,7 @@
 | 目录 | 归档内容 | 关键文档索引 |
 |---|---|---|
 | [`archive-docs/01-ux-agent/`](archive-docs/01-ux-agent/) | **华为 HarmonyOS 多设备 UX 检测系统 (`UX-Agent`)** | `design-specs/GUIAgent多设备UX检测系统-核心算法与代码对照详细设计说明书.md`（V2.0 视觉提案 + ArkUI 布局树静态复核 + 主动滑动与原位恢复）、`acceptance-specs/`（功能/模型性能验收说明与测试报告）、`docs/test-set/`（5 类设备单双三屏测试集与运行日志） |
-| [`archive-docs/02-cua-openmobile2/`](archive-docs/02-cua-openmobile2/) | **商汤 OpenMobile-2 / MobileGym++ (`cua过程文档` + `milestone文档`)** | `cua-process/`（63 Mock App 架构、333 Tools、215 锁定 Benchmark、Qwen-9B vs Gemini 3.1 `GUI-only vs Hybrid` 评测、弱探索+强接管数据合成、DAPO/RL 方案）、`milestone/`（组会周报、研究路线图、工具演进与论文写作计划） |
+| [`archive-docs/02-cua-openmobile2/`](archive-docs/02-cua-openmobile2/) | **商汤 OpenMobile-2 / MobileGym++（过程文档 + 2026-11-18 终稿/代码摘录）** | [`论文终稿_OpenMobile2/`](archive-docs/02-cua-openmobile2/论文终稿_OpenMobile2/)（正式 tex + ArXiv PDF + `A_appendix` 训练超参）、[`核心代码摘录/`](archive-docs/02-cua-openmobile2/核心代码摘录/)（Verifier/状态契约/mac-cua runtime）、会议交接与 `0907-RL对接/`；完整工程仍在仓外 `mobilegym-mock-tooluse` / `CUA/mac-cua` |
 | [`archive-docs/03-slidegate-and-lingcoder/`](archive-docs/03-slidegate-and-lingcoder/) | **M集群：SlideGate 幻灯片审校、AgentV3 全链路蒸馏 & LingCoder 代码工作流** | `gui-5d025-2-full-handover/`（**2026-11-16 完整评测与训练蒸馏机交接包**：AgentV3 四层编排源码与 `State V3` 文档、1.6万条 SFT 六步清洗脚本、全轨迹 DPO 构造与排障、5.2万张图文版式蒸馏、SlideGate ICLR 2027 定稿 LaTeX 与 Rebuttal 全文）、`训练配置和启动指南.md`（LingCoder 30B MoE 32卡消融） |
 | [`archive-docs/04-prior-thesis-and-reviews/`](archive-docs/04-prior-thesis-and-reviews/) | **本科毕设、RealEval/SPA-Bench 论文草稿与个人复盘** | `thesis/毕设/`（GUI Agent 架构与技术研究、开题/答辩/文献综述）、`thesis/realbench草稿/`（RealEval / MobileBench-v2 / 轨迹级非二元评测草稿）、`internship-timeline/`（商汤实习全时间线） |
 
@@ -60,6 +60,13 @@
 - **[`interview/05_无GitHub与远程ClaudeCode同步协作指南.md`](interview/05_无GitHub与远程ClaudeCode同步协作指南.md)**：无 GitHub 机器离线/SSH 克隆回传方案与远程 Claude Code 实时可视化审阅工作流。
 
 ---
+
+## 三点五、UX-Agent 里两条和论文有关的线（2026-10-27）
+
+阅读入口：[reports/2026-10-ux-agent/00_先看这个.md](reports/2026-10-ux-agent/00_先看这个.md)。桌面「研究方向」里有同名软链 `UX-Agent调研和实践`。
+
+- **UX 截断检测**：文献位置在 10 月 20 日汇报（`研究方向/1020汇报/`），算法对照在 [tracks/01-ux-testing-and-qa.md](tracks/01-ux-testing-and-qa.md)，10 月 14 日工程快照在 `archive-docs/01-ux-agent/`。
+- **开合探索**：10 月 22 日文献调研和 10 月 22–27 日点评试点（E0–E4）原先只在工程仓 `explore-research/`，已复制到 `reports/2026-10-ux-agent/`。Testing-Survey 仍只放论文笔记。
 
 ## 四、对话记录
 

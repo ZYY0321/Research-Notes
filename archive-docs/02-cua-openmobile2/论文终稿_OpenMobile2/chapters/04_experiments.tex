@@ -1,0 +1,203 @@
+% Owner: ________
+% Scope: setup, baselines, main results, analysis
+% Tables and figures for this section live in figures/ with labels prefixed by exp-.
+\section{Experiments}
+\label{sec:exp}
+
+In this section, we evaluate models trained with OpenMobile-Data on established mobile-agent benchmarks, real-device tasks, and \textsc{MobileGym++}. We use a two-stage curriculum for supervised fine-tuning (SFT): 3 epochs of GUI-only SFT followed by 2 epochs of hybrid SFT on the 11.6K demonstration trajectories. The resulting policy is further trained with RL on 512 tasks randomly sampled from the 2K+ executable tasks. Detailed training configurations are provided in Appendix~\ref{app:details}.
+
+
+\subsection{Evaluation Benchmarks}
+\label{sec:exp-bench}
+We evaluate on five benchmarks spanning three evaluation settings---real apps on emulators, simulated commercial apps, and physical devices---as well as GUI-only and tool-augmented interaction. This provides coverage across diverse environments and action spaces. Details are provided in Appendix~\ref{app:eval-bench}.
+
+\textbf{AndroidWorld}~\citep{rawles2025androidworld} contains 116 tasks across 20 real apps on the emulator, with success determined by the resulting device state.
+
+\textbf{MobileWorld}~\citep{kong2026mobileworld} contains 201 harder long-horizon and cross-app tasks, evaluated in both GUI-only and MCP-enabled settings.
+
+\textbf{MobileGym}~\citep{wu2026mobilegym} uses resettable mock apps with state-based verification and reports success rate (SR) and progress rate (PR).
+
+\textbf{\textsc{MobileGym++} Bench} (Section~\ref{sec:mgpp-bench}) contains 215 single- and cross-app tasks evaluated with identical tasks and checkers in GUI-only and hybrid settings.
+
+\textbf{SpaBench}~\citep{chen2024spa} evaluates tasks on physical Android devices, providing a real-device evaluation beyond the emulator-based training environments.
+
+\subsection{Main results}
+\label{sec:exp-main}
+
+\begin{table*}[h]
+\centering
+\caption{\textbf{Main results} on established mobile-agent benchmarks, real-device evaluation, and MobileGym++.
+We progressively train each base model with GUI-only SFT, hybrid GUI--tool SFT, and verifiable RL.
+Each stage is initialized from the preceding stage.
+$*$ denotes results reproduced by us, and
+$\pm$ denotes the standard deviation across evaluation seeds.}
+\label{tab:main}
+\small
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lccccccccc}
+\toprule
+Method &
+\multicolumn{2}{c}{AndroidWorld} &
+\multicolumn{2}{c}{MobileWorld} &
+\multicolumn{2}{c}{MobileGym} &
+SPA-Bench &
+\multicolumn{2}{c}{MobileGym++} \\
+\cmidrule(lr){2-3}
+\cmidrule(lr){4-5}
+\cmidrule(lr){6-7}
+\cmidrule(lr){9-10}
+&
+Pass@1$\uparrow$ & Pass@3$\uparrow$
+& GUI & MCP
+& SR & PR
+& L3
+& GUI & MCP \\
+\midrule
+\multicolumn{10}{c}{\textit{Commercial Models}} \\
+\midrule
+GPT-5.6-Sol
+  & -- & --
+  & 70.1 & --
+  & -- & --
+  & 68.6*
+  & -- & -- \\
+Gemini-3.1-pro
+  & -- & --
+  & -- & --
+  & -- & --
+  & --
+  & -- & -- \\
+\midrule
+\multicolumn{10}{c}{\textit{Open-Weight Models}} \\
+\midrule
+OpenMobile1-8B
+  & 64.7 $\pm$ 3.2 & 78.0
+  & 17.7 & --
+  & -- & --
+  & --
+  & -- & -- \\
+UI-Venus-1.5-8B
+  & 73.7 & --
+  & -- & --
+  & 15.4 & 28.3
+  & 29.8*
+  & 19.5* & 16.4* \\
+GUI-Owl-1.5-8B
+  & 69.0 & --
+  & 38.0 & 37.5
+  & 17.3* & 31.3*
+  & --
+  & 13.0* & 12.6* \\
+GUI-Owl-1.5-32B
+  & 69.4 & --
+  & 43.9 & 42.5
+  & 18.4* & 30.9*
+  & --
+  & 18.6* & 23.3* \\
+MAI-UI-8B
+  & 70.7 & --
+  & 27.5 & 20.0
+  & 16.8* & 28.3*
+  & --
+  & 19.2* & 18.8* \\ 
+MAI-UI-32B
+  & 73.3 & --
+  & 36.2 & 30.0
+  & -- & --
+  & --
+  & -- & -- \\
+% MAI-UI-235B-A22B
+%   & 76.7 & --
+%   & 39.7 & 37.5
+%   & -- & --
+%   & --
+%   & -- & -- \\
+\midrule
+\multicolumn{10}{c}{\textit{OpenMobile-2 (Open-Data Models)}} \\
+\midrule
+\multicolumn{10}{l}{\textit{9B Model}} \\[-2pt]
+Base (Qwen3.5-9B)
+  & 57.8 & --
+  & 13.0* & 12.5*
+  & 9.3* & 20.0*
+  & 25.5*
+  & 8.0* & 12.1* \\
+\quad + GUI SFT
+  & 70.0 $\pm$ 2.6 & 81.0
+  & 38.5 & 12.5
+  & 34.8 & 51.6
+  & --
+  & 41.1 & 41.9 \\
+\quad + Hybrid SFT
+  & 69.5 $\pm$ 2.1 & --
+  & 39.3 & 27.5
+  & 35.9 & 52.2
+  & 57.4
+  & 39.1 & 44.7 \\
+\quad + RL
+  & 71.3 $\pm$ 2.4 & 81.0
+  & -- & 27.5
+  & 38.3 & 52.0
+  & --
+  & 40.5 & 46.3 \\
+\addlinespace
+\multicolumn{10}{l}{\textit{27B Model}} \\[-2pt]
+Base (Qwen3.6-27B)
+  & 67.1 $\pm$ 4.1 *& 81.9*
+  & 36.2* & 32.5*
+  & 37.1* & 50.1*
+  & 30.0*
+  & 46.3* & 50.7* \\
+\quad + GUI SFT
+  & 78.7 $\pm$ 2.1 & 88.8
+  & 50.4 & 35.0
+  & 44.7 & 58.0
+  & --
+  & 54.9 & 57.7 \\
+\quad + Hybrid SFT
+  & 78.2 $\pm$ 3.5 & 87.9
+  & 48.7 & 45.0
+  & 48.4 & 64.5
+  & 57.4
+  & 55.3 & 65.6 \\
+\quad + RL
+  & 77.6 $\pm$ 3.0 & 87.1
+  & 46.2 & --
+  & 50.8 & 65.1
+  & --
+  & 55.3 & 62.6 \\
+\bottomrule
+\end{tabular}
+}
+\end{table*}
+
+% \paragraph{OpenMobile-Data substantially improves mobile-agent performance.}
+% As shown in Table~\ref{tab:main}, models fine-tuned on OpenMobile-Data consistently outperform their corresponding base models across AndroidWorld, MobileWorld, and MobileGym++. The gains are substantial across both model scales, with the 9B model improving by 12.2 points on AndroidWorld and the 27B model by 11.6 points, while the improvements also carry over to MobileWorld and MobileGym++. Beyond the environments used for data synthesis, the resulting models further transfer to real-device interaction: on real Android devices, the full SFT curriculum reaches 57.4 on SPA-Bench L3 for both model scales, substantially above their respective baselines. These results demonstrate that OpenMobile-Data provides broadly transferable interaction experience, highlighting the potential of open trajectory synthesis for building competitive mobile agents.
+
+% \paragraph{Hybrid SFT teaches app-native tool use and generalizes to unseen tools.}
+% We train with app-native tools defined by MobileGym++, where each application exposes its own tools and the agent can interleave tool calls with GUI actions while operating on the same underlying app state. As shown above, hybrid SFT substantially increases the benefit of the tool channel on MobileGym++, indicating that the model learns when and how to switch from direct manipulation to higher-level app-native operations. Importantly, this capability is not confined to the tools seen during training. On the MobileWorld MCP evaluation, which involves tools that are not part of the MobileGym++ training environment, hybrid SFT also yields clear gains over GUI-only SFT. This cross-environment improvement suggests that training on app-native tool interactions teaches a more general tool-use behavior: rather than memorizing specific tool APIs, the model learns to recognize when external capabilities are available and incorporate tool calls into its interaction strategy.
+
+\paragraph{OpenMobile-Data improves performance across established mobile-agent benchmarks.}
+As shown in Table~\ref{tab:main}, models fine-tuned on OpenMobile-Data consistently outperform their corresponding base models across AndroidWorld, MobileWorld, and MobileGym++. The improvements are substantial at both model scales: the 9B model gains 12.2 points on AndroidWorld, while the 27B model gains 11.6 points, with consistent improvements on MobileWorld and MobileGym++ as well. These results show that the interaction experience synthesized by OpenMobile-Data is useful across different mobile environments.
+
+\paragraph{Performance also transfers to physical devices.}
+Beyond established online benchmarks, we evaluate the resulting agents on real Android devices using SPA-Bench L3. The full SFT curriculum reaches 57.4 for both the 9B and 27B models, substantially outperforming their respective base models. This transfer to physical devices provides evidence that the benefits of OpenMobile-Data extend beyond the controlled environments used for training and evaluation, supporting its utility as a source of general mobile interaction experience.
+
+\paragraph{App-native tools improve performance on MobileGym++.}
+MobileGym++ enables agents to interleave GUI actions with application-specific tool calls while operating on the same underlying app state. On its benchmark, models trained with hybrid GUI--tool trajectories substantially outperform their GUI-only counterparts, with consistent gains at both model scales (Table~\ref{tab:main}). This result demonstrates that app-native tools provide a useful complementary action channel for mobile interaction.
+
+
+\paragraph{Hybrid SFT transfers tool-use behavior beyond the training tools.}
+We further compare hybrid GUI--tool SFT with GUI-only SFT to examine whether training with app-native tools leads to transferable tool-use behavior. On MobileGym++, hybrid SFT consistently outperforms GUI-only SFT under the same training setup. More importantly, the improvement carries over to MobileWorld MCP, whose tools are not present in the MobileGym++ training environment. This cross-environment transfer suggests that hybrid SFT can teach models to incorporate programmatic capabilities into their interaction strategy beyond memorizing the specific tool APIs observed during training.
+
+
+
+% \paragraph{Consistent improvements across established benchmarks.} Training on trajectories collected from our playground leads to substantial improvements over the corresponding base models. On AndroidWorld, Ours-9B improves Pass@1 from 57.3\% to 71.3\%, while Ours-27B reaches 78.2\% Pass@1 and 87.9\% Pass@3. On MobileWorld, Ours-27B achieves 41.9\% GUI success rate, compared with 25.0\% for Qwen3.6-27B. Similarly, on MobileGym, Ours-27B obtains 48.4\% SR and 64.5\% PR, improving over the corresponding baseline by 11.3 and 14.4 percentage points, respectively. These gains across benchmarks with different applications and task distributions indicate that the collected training data transfers beyond the specific applications used during training.
+
+% \paragraph{Hybrid interaction improves task completion.}
+% Hybrid GUI--tool interaction provides an effective action space for mobile task completion. On MobileGym++, Qwen3.6-27B improves only marginally from 40.0\% success with GUI-only interaction to 44.4\% with MCP interaction, whereas Ours-27B improves from 48.4\% to 58.1\%. Thus, the trained policy obtains a substantially larger gain from access to native tools, while also outperforming the corresponding base model by 8.4 and 13.7 percentage points in the GUI and MCP settings, respectively. This result demonstrates that the benefits of application-native tool interactions become more pronounced after training on our diverse GUI--tool trajectories.
+
+
+
+\label{sec:exp-gui}
+
