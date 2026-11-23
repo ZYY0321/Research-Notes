@@ -1,0 +1,520 @@
+SPA-Bench测评框架实验报告
+1. 框架概述与设置
+
+SPA-Bench是一个专为智能手机代理(Smartphone Agents)设计的综合性评测框架，用于评估各种代理在智能手机应用操作中的表现。
+
+1.1 任务开始前的设置选项
+
+从配置文件config.yaml.example可以看出，测评框架提供以下设置选项：
+1. 环境配置
+  - ADB路径、模拟器路径、Android SDK路径
+  - 结果保存目录
+  - 会话ID
+  - 数据集路径
+2. 设备/模拟器配置
+  - 默认键盘包
+  - 模拟器配置（AVD路径、名称）
+  - 模拟器数量
+  - 最大评估子进程数
+3. 代理配置
+  - OpenAI API模型选择
+  - 最大轮次数
+4. 特定代理配置
+  - 支持多种代理（AppAgent、MobileAgent、MobileAgentV2等）
+  - 每个代理的仓库路径、环境名称等
+    
+2. 测评流程详细分析
+
+评估结果格式
+[图片]
+SPA-Bench在results.csv中记录评估结果，主要包含以下关键指标：
+task_identifier,AppAgent_completion,AppAgent_exit_code,AppAgent_total_steps,AppAgent_finish_signal,direct_with_action_AppAgent_evaluation,result_only_semi_action_AppAgent_evaluation
+Multi_Apps_1_ENG,N,3,38,0,N,
+Multi_Apps_2_ENG,Y,4,40,0,N,F
+关键指标解释：
+- AppAgent_completion: 代理是否完成了任务执行（Y/N）
+- AppAgent_exit_code: 代理退出代码（0-正常完成，3-模型错误，4-达到最大回合数）
+- AppAgent_finish_signal: 代理是否发出完成信号（0-未发出，1-已发出）
+- direct_with_action_AppAgent_evaluation: 直接模式+完整动作信息的评估结果（S-成功，F-失败，N-未评估）
+- result_only_semi_action_AppAgent_evaluation: 结果模式+部分动作信息的评估结果（S-成功，F-失败，N-未评估）
+评估流程概述
+SPA-Bench评估任务完成情况的流程分为三个主要阶段：
+1. 代理执行阶段：代理执行任务并生成截图序列
+2. 粗粒度检测：通过关键组件匹配初步判断任务是否完成
+3. 细粒度评估：使用GPT-4o分析整个截图序列进行最终评估
+单应用任务评估
+4. 代理执行阶段
+单应用任务通常在一个应用内完成特定功能，如"在计算器应用中计算2+2"。
+代理执行过程记录在stdout.txt中
+[33mThought:
+[0m
+[35mTo calculate 2+2, I need to tap the "2" button, then the "+" button, then the "2" button again, and finally check the result.
+[0m
+[33mAction:
+[0m
+[35mtap(2)  
+[0m
+5. 粗粒度检测
+粗粒度检测通过key_component_match函数实现，从最后一张截图开始向前检查：
+
+def key_component_match(task_identifier, target_dir, dataset, case_sensitive=False):
+    screenshot_file_names = get_screenshot_file_names(target_dir)
+    key_components = dataset.loc[task_identifier, "key_component_final"]
+    # 从最后一张截图开始向前检查
+    for file_name in reversed(screenshot_file_names):
+        screen_info = text_extraction(target_dir + "/" + file_name, language)
+        # 检查所有关键组件是否都存在
+        success = all([component in screen_info for component in key_components])
+        if success:
+            return file_name, len(screenshot_file_names)
+    return "", len(screenshot_file_names)
+
+对于单应用任务，关键组件通常是任务完成的直接证据，例如：
+- 计算器任务：屏幕上显示结果"4"
+- 闹钟设置任务：屏幕上显示"闹钟已设置"和时间"6:00 AM"
+- 
+6. 细粒度评估
+粗粒度检测通过，调用GPT-4o进行细粒度评估：
+
+GPT-4o评估基于系统提示和任务描述，分析整个截图序列：
+
+def sys_prompt_template(action_mode):
+    prompt = f"""You are an expert in evaluating smartphone operation tasks. Your primary role is to determine whether a task has been successfully completed based on a series of screenshots (provided in order of execution) and the corresponding task description.
+Guidelines:
+No Assumptions: Evaluate solely based on the provided screenshots.
+Subtask Completion: A task is successful only when all its subtasks are successfully completed.
+...
+
+多应用任务评估
+代理执行阶段
+多应用任务涉及多个应用间的切换和交互，如"在联系人中找到zyy，发送问候消息，然后为其所在城市添加时钟"。
+多应用任务的粗粒度检测使用与单应用相同的key_component_match函数，但关键组件更复杂
+如果任何一个子任务未完成，整个任务都会被评为失败（F）。
+五、评估机制的关键区别
+单应用任务评估特点
+1. 关键组件简单：通常只需检查一个特定文本
+2. 最后截图足够：最后的截图通常能够反映整个任务的完成状态
+3. 评估标准聚焦：主要关注特定功能的正确执行
+
+单应用任务的关键组件示例
+key_components = ["4"]  # 计算器结果
+多应用任务评估特点
+1. 关键组件复杂：需要检查多个子任务的完成状态
+2. 需要分析整个序列：最后的截图可能只反映最后一个子任务
+3. 全部子任务要求：所有子任务都必须成功完成
+4. 跨应用导航评估：特别关注应用间的切换和交互
+
+SPA-Bench关键组件匹配机制详解
+
+关键组件定义
+SPA-Bench使用key_component_final字段定义关键组件：
+task_identifier,task_app,task_language,task_description,task_difficulty,golden_steps,key_component_final,adb_app,adb_home_page,is_cross_app
+clock_0,clock,ENG,Set an alarm for 8am.,1,4,['8'],com.google.android.deskclock,com.android.deskclock.DeskClock,N
+这些关键组件是**纯文本元素**，例如：
+- 计算器任务：['2'] - 表示结果"2"应出现在屏幕上
+- 时钟任务：['8'] - 表示"8"（小时）应出现在屏幕上
+- 多应用任务：['shanghai', 'clock', 'world clock'] - 表示这些文本应出现在屏幕上
+  
+关键组件匹配实现
+从key_component_matcher.py文件中可以看到精确的实现：
+def key_component_match(task_identifier, target_dir, dataset, case_sensitive=False):
+    screenshot_file_names = get_screenshot_file_names(target_dir)
+    language = dataset.loc[task_identifier, "task_language"]
+    key_components = dataset.loc[task_identifier, "key_component_final"]
+    if not case_sensitive:
+        key_components = [component.lower() for component in key_components]
+    if len(screenshot_file_names) > 0:
+        # start from the last screenshot
+        for file_name in reversed(screenshot_file_names):
+            screen_info = text_extraction(target_dir + "/" + file_name, language)
+            if not case_sensitive:
+                screen_info = screen_info.lower()
+            # check whether all key component exist in the final screenshot
+            success = all([component in screen_info for component in key_components])
+            if success:
+                return file_name, len(screenshot_file_names)
+        # doesn't match any screenshots
+        return "", len(screenshot_file_names)
+    else:
+        return "", 0
+
+关键步骤如下：
+1. 获取关键组件：从数据集中获取key_component_final字段
+2. 处理大小写：如果设置了不区分大小写，将所有关键组件转换为小写
+3. 从最后一张截图开始：从最后一张截图开始向前检查
+4. 文本提取：使用OCR从截图中提取文本
+5. 匹配检查：检查所有关键组件是否都存在于提取的文本中
+6. 返回结果：如果找到匹配的截图，返回该截图文件名和总截图数量
+  
+非文本关键组件处理
+重要发现：从代码中可以明确看出，SPA-Bench实际上不支持非文本关键组件的匹配。关键组件匹配完全基于OCR文本提取，没有实现模板匹配或其他视觉元素检测方法。
+1. 关键组件匹配仅基于文本
+2. 非文本UI元素（如图标、按钮）的检测不是通过粗粒度检测实现的
+3. 如果任务需要检测非文本元素，可能完全依赖于GPT-4o的细粒度评估
+  
+评估流程的精确实现
+从evaluator.py文件中可以看到评估流程的精确实现：
+
+if not skip_key_components:
+    matched_screenshot, total_num_screenshot = key_component_match(task_identifier, target_dir, dataset)
+else:
+    matched_screenshot, total_num_screenshot = -1, len(get_screenshot_file_names(target_dir))
+
+if total_num_screenshot == 0:
+    evaluation_detail = {}
+    result = -1
+else:
+    evaluation_detail = {
+        "coarse_detect": 1 if matched_screenshot else 0,
+    }
+    fine_detect_result = 0
+    fine_detect_reason = ""
+    result = 0
+    api_cost = 0
+    if skip_key_components or matched_screenshot:
+        start_time = datetime.now()
+        fine_detect_result, fine_detect_reason, token_taken, api_cost = gpt4o_evaluator(
+            task_identifier, target_dir, dataset, reasoning_mode, action_mode
+        )
+
+关键流程如下：
+1. 粗粒度检测：
+  - 如果skip_key_components=False（默认情况），执行关键组件匹配
+  - 如果skip_key_components=True，跳过关键组件匹配
+2. 细粒度评估：
+  - 只有在以下情况之一才会进行：
+    - skip_key_components=True（用户选择跳过粗粒度检测）
+    - matched_screenshot不为空（粗粒度检测通过）
+  - 如果粗粒度检测失败且未设置跳过，则不进行细粒度评估，直接判定为失败
+3. 结果判定：
+  - 如果没有进行细粒度评估，结果为result = 0（失败）
+  - 如果进行了细粒度评估，结果基于GPT-4o的评估
+    
+总结
+
+1. 关键组件匹配机制：
+  - SPA-Bench使用纯文本的关键组件匹配
+  - 从最后一张截图开始，使用OCR提取文本
+  - 检查所有关键组件是否都存在于提取的文本中
+    
+2. 非文本元素处理：
+  - SPA-Bench的粗粒度检测**不支持**非文本关键组件的匹配
+  - 对于需要检测非文本元素的任务，可能完全依赖于GPT-4o的细粒度评估
+    
+3. 评估流程：
+  - 粗粒度检测：使用OCR检查关键文本组件
+  - 细粒度评估：只有在粗粒度检测通过或设置跳过时才进行
+  - 结果判定：基于细粒度评估结果（如果进行了）或直接判定为失败
+    
+4. 单应用与多应用区别：
+  - 使用相同的关键组件匹配机制
+  - 多应用任务的关键组件可能更复杂，包含多个子任务的指示文本
+  - 由于最后的截图可能只反映最后一个子任务，多应用任务的粗粒度检测可能不够准确
+    
+    
+以clock_5任务为例
+2.1 任务定义
+
+任务标识符: clock_5
+任务描述: Add current time at Melbourne (Australia) to clock. Change style to Analog for clock. Change style to Analog for screen saver.
+难度级别: 3（高难度）
+理想步骤数: 12
+关键组件: ['settings', 'analog']
+应用: Clock应用 (com.google.android.deskclock)
+2.2 执行阶段
+
+AppAgent执行了10个步骤，但未能成功完成任务。以下是详细的执行流程：
+
+1. 步骤1: 识别界面并点击"+"按钮添加新的世界时钟
+  - 操作: tap(2) - 点击加号按钮
+  - 屏幕截图: 0.png
+    
+2. 步骤2: 在搜索栏中输入"Melbourne"
+  - 操作: text("Melbourne") - 输入文本
+  - 屏幕截图: 1.png
+[图片]
+3. 步骤3: 选择搜索结果中的墨尔本
+  - 操作: tap(4) - 点击墨尔本搜索结果
+  - 屏幕截图: 2.png
+    
+4. 步骤4: 点击菜单按钮访问设置
+  - 操作: tap(1) - 点击右上角菜单按钮
+  - 屏幕截图: 3.png
+[图片]
+5. 步骤5: 尝试点击"Settings"选项
+  - 操作: tap(1) - 点击设置选项
+  - 屏幕截图: 4.png
+    
+6. 步骤6: 发现错误导航到"Send Feedback"界面，点击返回
+  - 操作: tap(1) - 点击返回按钮
+  - 屏幕截图: 5.png
+[图片]
+7. 步骤7: 再次尝试访问设置菜单
+  - 操作: tap(1) - 点击右上角菜单按钮
+  - 屏幕截图: 6.png
+    
+8. 步骤8: 再次尝试点击"Settings"选项
+  - 操作: tap(1) - 点击设置选项
+  - 屏幕截图: 7.png
+    
+9. 步骤9: 再次发现错误导航到"Send Feedback"界面，点击返回
+  - 操作: tap(1) - 点击返回按钮
+  - 屏幕截图: 8.png
+    
+10. 步骤10: 第三次尝试访问设置菜单
+  - 操作: tap(1) - 点击右上角菜单按钮
+  - 屏幕截图: 9.png
+  - 此时遇到错误: "ERROR: tap action invalid"
+
+2.3 评估阶段
+
+评估分为两个主要步骤：
+
+1. 粗粒度检测（Coarse Detection）
+  - 使用key_component_matcher.py检测最后一张截图中是否包含预定义的关键组件
+  - 对于clock_5，检测是否包含"settings"和"analog"
+  - 使用OCR技术从截图中提取文本
+  - 检查提取的文本是否包含所有关键组件
+    
+2. 细粒度检测（Fine Detection）
+  - 如果粗粒度检测通过，则进行细粒度检测
+  - 使用GPT-4o模型（vlm_evaluator.py）评估任务是否成功完成
+  - 模型接收所有截图（可选择带操作信息的版本）和任务描述
+  - 模型分析截图序列，判断任务是否完成
+  - 返回结果（1表示成功，0表示失败）和原因
+    
+2.4 结果记录
+
+1. 结果保存
+  - 执行结果保存在results.csv中
+  - 包括完成状态、步骤比率、Token消耗等指标
+  - 详细的评估结果以JSON格式保存
+[图片]
+2. clock_5的结果分析
+
+结果实例
+  gmail_0,gmail,ENG,Draft an email to agent.benchmark.2024@gmail.com asking them about their new paper.,1,5,['paper'],com.google.android.gm,com.google.android.gm.ConversationListActivityGmail,N,Y,emulator-5554,4,10,0.14708,243.37033,0,2,0.13169,243.23865,2264.81818,136.45455,N,F,"{""coarse_detect"": 0}"
+  - 完成状态: Y (任务执行完成)
+  - 使用设备: emulator-5554
+  - 退出代码: 4 (表示达到最大轮次限制)
+  - 总步骤数: 10 (代理执行了10个步骤)
+  - 总API成本: 0.14708 (美元)
+  - 总执行时间: 243.37033 (秒)
+  - 完成信号: 0 (未收到完成信号)
+  - 步骤比率: 2 (执行步骤/黄金标准步骤 = 10/5 = 2)
+  - 初始化时间: 0.13169 (秒)
+  - 执行时间: 243.23865 (秒)
+  - 平均提示词tokens: 2264.81818
+  - 平均完成tokens: 136.45455
+  - 执行错误: N (没有执行错误)
+  - 
+  在SPA-Bench评测框架中，AppAgent_exit_code和AppAgent_finish_signal是两个用于表示代理执行状态的指标：
+  退出代码表示代理终止执行的方式或原因：
+  - 0: 正常完成，代理成功完成了所有任务
+  - 1: 一般错误，代理执行过程中遇到未指定的错误
+  - 2: 初始化错误，代理在启动或设置阶段失败
+  - 3: 模型响应错误，如在Multi_Apps_1_ENG中的"ERROR: Model response failed!"
+  - 4: 达到最大回合限制，如在Multi_Apps_2_ENG中的"Task finished due to reaching max rounds"
+  - 其他值可能表示特定的错误状态或异常情况
+  AppAgent_finish_signal
+  完成信号用于指示代理是否认为自己已完成任务：
+  - 0: 代理未发出完成信号，表示代理未能识别任务已完成或未能完成任务
+  - 1: 代理发出完成信号，表示代理认为已成功完成了所有要求的任务
+    
+2.5 跨应用任务
+  第一阶段：应用识别与切换验证 (stage_1_cross_evaluator)
+  
+  1. 应用识别：
+    - 使用GPT-4o分析所有截图，识别每个应用的使用区间
+    - 返回格式如：{'Settings': (2, 11), 'Clock': (13, 18)}，表示每个应用的开始和结束截图索引
+      
+  2. 切换验证 (stage_1_checker)：
+    - 检查每个应用是否被识别到（非-1值）
+    - 确保每个应用的开始索引小于结束索引
+    - 验证索引不超过总截图数
+    - 确保应用间的切换顺序正确（前一个应用结束后才开始下一个）
+      
+  3. 失败条件：
+    - 任何应用未被识别（返回-1）
+    - 应用的开始索引大于结束索引
+    - 索引超出截图范围
+    - 应用切换顺序错误
+      
+  如果第一阶段验证失败，整个任务直接判定为失败，不进入第二阶段。
+  
+  第二阶段：子任务完成度评估 (stage_2_cross_evaluator)
+  
+  1. 子任务拆分：
+    - 从任务配置文件中获取每个应用对应的子任务描述
+    - 例如：Settings应用中启用"Data Saver"，Clock应用中设置闹钟
+      
+  2. 子任务评估：
+    - 对每个子任务，使用GPT-4o分析对应应用的截图区间
+    - 系统提示GPT-4o评估任务是否完成，要求返回格式包含"Result: 0"或"Result: 1"
+    - 从GPT-4o的响应中提取结果数字（0表示失败，1表示成功）
+      
+  3. 整体判断：
+if result == 0:
+    return False
+    - 任何子任务返回0（失败），整个多应用任务就判定为失败
+    - 只有所有子任务都返回1（成功），整个任务才判定为成功
+      
+关键细节
+  
+  1. 严格的全部成功要求：
+    - 多应用任务要求所有子任务都成功完成，任何一个子任务失败都导致整体失败
+    - 没有部分成功的概念，是一个二元判断（成功/失败）
+  2. 基于GPT-4o的主观评估：
+    - 子任务完成度依赖GPT-4o的判断，这是一种主观评估
+    - 提供GPT-4o的系统提示决定了评估标准的严格程度
+  3. 记忆机制：
+    - 框架支持子任务间的信息传递（memory_dict）
+    - 某些子任务可能依赖前一个子任务的结果
+  4. 评估依赖截图区间：
+    - 如果第一阶段识别的应用使用区间不准确（如您提到的Settings在截图4就完成但识别为2-11），会影响第二阶段的评估准确性
+      
+  这种机制导致的问题是：即使代理成功完成了部分子任务（如Settings中的Data Saver），但因为另一个子任务失败（如Clock中设置了错误的闹钟时间），整个多应用任务仍被判定为失败，没有反映部分成功的情况。
+  
+从results.csv中，SPA-Bench提供以下关键评测指标（以Multi_Apps_2_ENG为例）：
+
+1. 任务元数据
+- task_identifier: "Multi_Apps_2_ENG"
+- category: "Multi_Apps"
+- task_language: "ENG"
+- task_app: "['Contacts', 'Messages', 'Clock']"
+- task_description: "Send a greeting message to all of zyy's phone numbers and add a clock for their location."
+- task_difficulty: 3（难度等级）
+- golden_steps: 20（理想完成步骤数）
+- is_cross_app: "Y"（是否跨应用任务）
+1. 完成情况指标
+- AppAgent_completion: "Y"（任务是否完成）
+- AppAgent_device: "emulator-5554"（使用的设备）
+- AppAgent_exit_code: 4（退出代码）
+- AppAgent_finish_signal: 0（完成信号）
+1. 效率指标
+- AppAgent_total_steps: 40（总步骤数）
+- AppAgent_step_ratio: 2.0（实际步骤与理想步骤比率）
+- AppAgent_total_time: 820.16584（总执行时间，秒）
+- AppAgent_elapsed_time_initial: 0.11555（初始化时间，秒）
+- AppAgent_elapsed_time_exec: 820.05029（执行时间，秒）
+1. 资源消耗指标
+- AppAgent_total_token_cost: 0.55332（总令牌成本，美元）
+- AppAgent_avg_prompt_tokens: 2251.95122（平均提示令牌数）
+- AppAgent_avg_completion_tokens: 149.04878（平均完成令牌数）
+1. 错误与评估指标
+- AppAgent_exec_error: "N"（执行是否有错误）
+- direct_with_action_AppAgent_evaluation: "N"（直接行动评估结果）
+- result_only_semi_action_AppAgent_evaluation: "F"（仅结果半行动评估）
+- 
+3. 中间输出获取机制
+
+SPA-Bench通过多种方式获取模型的中间输出：
+
+1. 操作日志
+  - 记录每个步骤的完整信息（观察、思考、行动）
+  - 保存在log.json文件中
+  - 包含Token消耗统计
+[图片]
+2. 屏幕截图
+  - 每个操作后自动截取屏幕
+  - 保存为序列化的PNG文件（0.png, 1.png, ...）
+3. 操作可视化
+  - 可选择在截图上添加操作信息
+  - tap_only：在截图上标记点击位置（红点）
+  - tap_and_text：在截图底部添加操作描述文本
+[图片]
+4. 标准输出/错误
+  - 记录执行过程中的标准输出和错误
+  - 保存在stdout.txt和stderr.txt中
+    - 
+    多应用任务成功判断机制
+    
+    
+
+4. 框架局限性与优化建议
+现有局限性总结
+
+1. 关键组件检测局限
+- 纯文本依赖：仅支持文本关键组件，无法处理图标、按钮等非文本UI元素
+- OCR技术限制：OCR识别可能受屏幕分辨率、字体、对比度等因素影响，导致误判
+- 预定义需求：关键组件需要预先定义，难以适应动态变化的UI或未预期的成功状态
+2. 评估标准局限
+- 系统提示依赖：评估标准严格程度完全取决于提供给GPT-4o的系统提示
+- 单截图判定：很多任务的成功无法仅通过一张截图判定，特别是多步骤任务
+- 部分完成处理：无法合理评价完成部分子任务的情况，只有全部完成才判定成功
+3. 错误分析局限
+- 循环检测缺失：无法有效检测代理陷入重复操作循环的情况
+- 步骤冗余vs错误：仅通过步骤数无法区分步骤冗余和代理陷入错误状态
+- 失败原因分析：缺乏对失败原因的细致分类和分析机制
+4. 多应用任务局限
+- 跨应用状态跟踪：难以跟踪跨应用的状态变化和上下文保持
+- 最终截图局限：最后的截图通常只能反映最后一个子任务的状态
+  
+改进方案：增强型移动应用评估框架(EMAF)
+
+形式化表示框架
+基于场景-状态-动作三元组构建一个形式化表示系统，将Agent的行为轨迹表示为一个状态转换图，通过分析这个图来评估Agent的表现。
+1. 三元组结构
+每个交互步骤表示为一个三元组 (S_i, A_i, S'i)：
+- S_i：初始场景-状态
+- $$A_i$$：Agent执行的动作
+- S'：执行动作后的新场景-状态
+2. 场景-状态表示
+每个场景-状态 $$S$$ 包含三个关键组成部分：!场景-状态表示
+- 上下文场景 (C)：应用、页面、任务阶段
+- UI状态 (U)：可见元素、布局、交互对象
+- 可变状态 (V)：数据、输入、选择状态
+3. 动作表示
+动作 $$A$$ 包含以下属性：
+- 类型：tap、text、swipe等
+- 参数：坐标、文本内容、方向等
+- 目标：动作针对的UI元素
+- 意图：动作的预期效果
+- 结果：动作的实际效果
+4. 轨迹表示
+Agent的完整行为轨迹表示为一个有向图：!轨迹表示
+- 节点：场景-状态
+- 边：动作及其引起的状态转换
+- 路径：Agent的行为序列
+
+1. 多模态关键组件检测
+改进点：
+- 支持文本、模板和对象检测的多模态组件检测
+- 使用模板匹配识别图标、按钮等UI元素
+- 使用对象检测识别通用UI组件（如开关、滑块）
+  
+2. 状态跟踪与转换分析
+改进点：
+- 跟踪应用状态变化序列，而非单一截图
+- 分析状态转换，识别有效和无效的转换
+- 实现循环检测算法，及早发现代理陷入循环
+  
+3. 分层评估机制
+改进点：
+- 实现三层评估机制，平衡效率和准确性
+- 允许部分成功的评估，使用完成度评分而非二元判断
+- 只在必要时调用LLM评估，降低成本
+  
+4. 细粒度错误分析
+改进点：
+- 实现细粒度错误分类和分析
+- 检测特定错误模式（循环、导航问题、UI交互问题）
+- 使用LLM分析更复杂的错误模式
+  
+5. 多任务进度跟踪
+改进点：
+- 将任务分解为子任务，单独跟踪每个子任务的进度
+- 支持部分完成评估，使用0-1的完成度而非二元判断
+- 允许为子任务分配权重，计算加权总进度
+  
+6. 交互式评估与自适应基准
+改进点：
+- 建立自适应基准，根据历史执行情况调整评估标准
+- 实现比较评估，将代理性能与基准进行比较
+- 支持评估框架的持续改进和自我调整
+  
+7. 多模态评估提示
+改进点：
+- 设计更全面的评估提示，引导LLM进行细致评估
+- 包含子任务完成度、错误分析和整体评分
+- 提供详细的推理过程，增强评估透明度

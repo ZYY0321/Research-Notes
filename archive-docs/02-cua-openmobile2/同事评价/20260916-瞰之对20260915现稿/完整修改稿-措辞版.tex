@@ -1,0 +1,80 @@
+% 措辞强化版 · 可粘贴
+% 正文只留一张图：app 深度散点。对照表展开、ours 放最后一行。现稿未替换。
+% 粘贴时请同时放入 figures/fig-app-scale-scatter.pdf
+
+\section{MobileGym++}
+\label{sec:mobilegym++}
+\label{sec:method}
+
+\subsection{A gap in controllable commercial applications}
+\label{sec:mgpp-env}
+
+Mobile agents are increasingly moving toward real-world workflows across commercial applications, such as travel booking on Trip and online shopping on Taobao, where tasks are often long-horizon and grounded in real user needs. However, training and evaluation environments for such commercial applications remain largely missing, leaving agents with limited opportunities to practice and be evaluated in realistic mobile-use scenarios.
+
+Real-device or Android-emulator setups face login, reset, and real-world side effects that make large-scale training impractical. Prior simulated-app work typically covers only a small slice of commercial apps and rarely provides resettable business state~\citep{rawles2025androidworld,kong2025mobileworld}.
+
+We built MobileGym++, a browser-hosted mobile environment that carries commercial workflows in controllable simulated applications. The runtime extends MobileGym~\citep{wu2026mobilegym}, preserving its advantages in reset and programmatic evaluation while substantially expanding domain coverage, the number and richness of applications, and support for realistic cross-app workflows. Observations remain screen pixels, there is no accessibility tree, and the agent cannot read business state; device state can be exported and restored, and many instances can run in parallel. In this round we newly built 35 commercial apps, bringing the total with the predecessor to 64 ready-to-use applications spanning travel, shopping, finance, content, social, office, and local services. Each application maintains persistent business states, such as orders, budgets, and itineraries, which evolve through interaction and enable task verification based on the resulting state.
+
+\subsection{35 high-fidelity commercial applications}
+\label{sec:mgpp-apps}
+
+We implemented the 35 applications from their corresponding real-world clients. Construction starts from key screens of the source application: the data schema and interaction graph are specified first, after which the visual interface is restored onto this skeleton. Human annotators verify the replica against the device rather than authoring the implementation. Because the object model and navigation structure are fixed before the interface is painted, each application maintains business state of sufficient richness to support commercial writes. The procedure is specified in Appendix~\ref{app:mgpp-build}.
+
+The newly built applications have sufficient structural depth to carry realistic commercial flows. Across these 35 clients, the median application exposes 37 routes, 175 interactive actions, and 88 page transitions, with a median interaction depth of 3 from the home screen. Even the shortest path to a target page therefore already crosses multiple interface layers, so the page structure itself lower-bounds the number of agent steps. For comparison, the largest application in the original MobileGym exposes 100 routes and 265 actions, with a maximum depth of 7. Figure~\ref{fig:mgpp-scale} shows the per-application route and action counts. The tool channel is described in Section~\ref{sec:mgpp-tools}.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/fig-app-scale-scatter.pdf}
+\caption{Per-application interaction scale. Each point is one simulated application, plotted by distinct routes against interactive actions (log--log). Filled circles are the 35 newly built applications (color: domain; area: number of benchmark tasks using that app, independent of depth); open squares are prior MobileGym applications. Crosses mark literature estimates for AndroidWorld and MobileWorld under a different measurement protocol and are not used in the comparison. Per-app statistics are in Appendix~\ref{app:mgpp-apps}.}
+\label{fig:mgpp-scale}
+\end{figure}
+
+Table~\ref{tab:mgpp-compare} compares controllable environments on coverage and evaluation protocol. It is not a score table.
+
+\begin{table*}[t]
+\caption{Controllable mobile environments compared on coverage and protocol, not on scores. Task counts keep each paper's unit and are not a difficulty ranking. Cross-app: yes = workflows may span applications; partial = limited or messenger-style coupling. Reset: programmatic = a shared initial state can be restored; limited = login, side effects, or per-app persistence interfere. Numbers for AndroidWorld, AppWorld, and MobileWorld are as reported~\citep{rawles2025androidworld,trivedi2024appworld,kong2025mobileworld}.}
+\label{tab:mgpp-compare}
+\begin{center}
+\scriptsize
+\setlength{\tabcolsep}{3.2pt}
+\begin{tabular}{llrrllll}
+\hline
+Environment & Platform & Apps & Tasks & Actions & Cross-app & Reset & Checker reads \\
+\hline
+AndroidWorld & emulator (real apps) & $\sim$20 & 116 tmpl. & GUI & partial & limited & system state \\
+AppWorld & API (no phone GUI) & 9 & 750 / 250 sc. & API & yes & programmatic & app DBs \\
+MobileWorld & emulator (real apps) & 20 & 201 & GUI + MCP & yes & limited & mixed \\
+MobileGym & browser-hosted simulation & 28 & 416 tmpl. & GUI & partial & programmatic & device-state diff \\
+\textbf{MobileGym++ (ours)} & browser-hosted simulation & 64 (+35) & 215 & GUI + in-app tools & yes & programmatic & app business state \\
+\hline
+\end{tabular}
+\end{center}
+\end{table*}
+
+\subsection{Realistic cross-application workflows}
+\label{sec:mgpp-crossapp}
+
+Cross-application workflows are routine on a real device, yet login barriers, irreversible side effects, and per-app persistence make it impractical to restore a shared initial state.
+
+MobileGym++ places several commercial applications on a single resettable device. Each application maintains its own live business objects---orders, expenses, itineraries, contacts---which evolve through on-screen actions. Clipboard, system broadcasts, and inter-app navigation connect the applications, so a workflow can leave one client and write into another's store rather than merely forwarding a message.
+
+\subsection{Hybrid GUI and app-native tool use}
+\label{sec:mgpp-tools}
+
+Commercial applications commonly expose structured lookup and draft interfaces, reflecting that the corresponding records would otherwise be reached only through deep GUI navigation. Prior environments already combine GUI actions with an external tool channel, or operate in an API-only setting; MobileGym++ does not introduce hybrid interaction as such. We instead expose in-app tools according to a simple design principle: tools are provided for structured search and structured writes over each application's own objects, and they update the same store as the GUI.
+
+Approximately 52 applications expose such tools in the foreground, occupying the same action slot as a tap, swipe, or text input. GUI-only remains a complete setting: every task in the benchmark can be completed through the graphical interface. Hybrid adds a second execution path over the same tasks, initial states, and terminal checks, without changing what counts as success.
+
+\subsection{MobileGym++ Bench}
+\label{sec:mgpp-bench}
+
+Existing mobile-agent benchmarks already evaluate single-app GUI operations, and several include cross-application workflows~\citep{rawles2025androidworld,kong2025mobileworld}. Those settings typically terminate on system state or UI-level fields. MobileGym++ Bench evaluates whether an agent can complete a commercial write inside resettable simulated applications, when the required value must be recovered through deep in-app navigation and, in cross-app tasks, from another application's live state rather than from the instruction.
+
+\paragraph{Task design.}
+The primary source of difficulty is commercial navigation and information flow. A single-app task requires the agent to locate, filter, and fill fields across a deep page stack before a business object is written. A cross-application task further requires a live value from another application's store to be identified, carried across the application boundary, and written into the correct field. Instructions are phrased as user goals and do not name widgets, tools, or checker fields; the terminal is a write in the application's own business state.
+
+\paragraph{Scale and composition.}
+The benchmark comprises 215 tasks spanning seven business domains: 109 tasks involve a single application, 74 involve two, 27 involve three, and 5 involve four. Tasks are distributed across applications and business objects so that aggregate performance is not dominated by a small subset of clients.
+
+\paragraph{Evaluation protocol.}
+Each task specifies a user goal, a bound initial state, and a programmatic checker over the before/after diff of application business state. The checker does not inspect the trajectory or screenshots and does not rely on a model judge. GUI-only and Hybrid are evaluated on the same tasks, initial states, and checks. The primary metric is success rate; we additionally report mean steps on successful trajectories and the fraction of runs that reach the step cap, so that efficiency is not confounded with reliability.

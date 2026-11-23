@@ -1,0 +1,36 @@
+% Owner: ________
+% Scope: how OpenMobile-Data is collected and why the traces are usable.
+% Training recipe stays in Section~\ref{sec:exp-setup}.
+\section{OpenMobile-Data}
+\label{sec:data}
+
+We release \textbf{OpenMobile-Data}: 12K demonstration trajectories and more than 2K executable RL tasks collected across our Android emulator environments and \textsc{MobileGym++}. The 12K demonstrations are task--trace pairs for imitation, including 1.7K trajectories that interleave GUI actions with app-native tool calls. Each RL task specifies a goal, an initial state, and a programmatic reward, and can be rolled out in MobileGym++ in either GUI-only or hybrid mode.
+\subsection{Construction Pipeline}
+\label{sec:data-pipeline}
+\label{sec:data-collect}
+
+\paragraph{Environment abstraction and task construction.}
+To generate executable user goals, the task generator must first know what functionality the environment provides and which operations are available from each state. We therefore explore each application to construct a state--action transition graph, where nodes represent representative application states and edges capture actions that induce state transitions. On the Android emulator, we explore the application to discover screens, actions, and transitions, and consolidate perceptually similar screenshots into representative states. This exploration yields a connected view of the application's functionality: the \textbf{global} view captures the overall state--action structure and available functionality, while the \textbf{local} view captures the actions and states reachable from a particular state. For \textsc{MobileGym++}, the same views are derived directly from the backend specification, which explicitly defines pages, actions, and business objects. Conditioned on these views, Gemini-3.1-Pro-Preview generates realistic and executable user instructions. We filter the generated instructions for quality and diversity, removing low-quality and highly similar tasks.
+
+\paragraph{Trajectory collection and filtering.}
+Conditioned on the generated user instructions, Gemini-3.1-Pro-Preview acts as the teacher agent and executes each task in its corresponding environment. The execution follows the available state--action transitions and produces a trajectory of screens, GUI actions, and, where available, native tool calls. We retain only rollouts that complete the specified task and pass the corresponding runtime-specific verifier: completion is assessed by a vision-language judge on the Android emulator, while \textsc{MobileGym++} uses its programmatic task verifier. After collecting successful trajectories, we perform step-level filtering to remove redundant interactions, including meaningless action loops and actions that leave the application state unchanged. The resulting data are released as two separate resources: demonstration trajectories retain the full observation--action sequence, while executable RL tasks retain only the instruction, initial state, and verifier. Details of the verification and filtering procedures are provided in Appendix~\ref{app}.
+
+
+\subsection{Data Statistics}
+\label{sec:data-quality}
+\label{sec:data-stats}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{figures/data-quality-3panel.pdf}
+\caption{Diversity and coverage of OpenMobile-Data.
+\textbf{(a)}~Lorenz curves across seven domains, with Gini coefficients in the legend.
+\textbf{(b)}~Pairwise cosine similarity among task goals.
+\textbf{(c)}~Fraction of trajectories spanning multiple applications.}
+
+\label{fig:data-quality}
+\end{figure}
+
+We characterize OpenMobile-Data from three complementary perspectives: application-domain coverage, task-level similarity, and workflow scope. The data show broad coverage across seven domains, moderate pairwise task similarity (mean cosine similarity 0.43), and substantial cross-app workflows, with 30\% of trajectories spanning multiple applications (40\% on the emulator) (Figure~\ref{fig:data-quality}). Together, these statistics indicate diverse tasks and interaction workflows without strong concentration in any single domain or template.
+
+

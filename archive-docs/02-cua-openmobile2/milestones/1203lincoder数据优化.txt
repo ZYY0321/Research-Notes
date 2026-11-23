@@ -1,0 +1,585 @@
+ BigCodeBench语言在Application Development中的数据质量分析
+ 严重被算法题污染的语言：
+1. Python: 81.9%算法题- 严重污染！
+2. C++: 18.5%算法题- 不适合软工
+3. Java: 21.8%算法题- 算法题较多
+  
+1. JavaScript: 12.1%算法题，32.2%真实应用 - 质量最好！
+  - 有Node.js web server、DOM操作等真实Web开发内容
+2. Dart: 2.9%算法题，38.2%真实应用 - Flutter开发质量高！
+  - 有Calculator应用、StreamController等移动开发内容
+3. C#: 12.2%算法题，14.1%真实应用 - 相对平衡
+  - 有缓存机制、Switch语句等应用开发内容
+    
+1. Swift: 20.9%算法题，17.0%真实应用 - iOS开发有一定质量
+2. Rust: 24.0%算法题，14.9%真实应用 - 系统编程内容
+3. Go: 9.3%算法题，15.3%真实应用 - 并发和HTTP服务
+  
+1. C: 10.7%算法题，仅1.9%真实应用 - 主要是基础编程
+  
+ 打标提示词问题分析
+问题1: application development 定义过于宽泛
+
+### application development
+Dialog focuses on building end-user applications (web, mobile, desktop), 
+feature implementation, UI logic, or business logic.
+
+关键问题: "feature implementation" 这个词太宽泛了！
+错误理解: 实现一个排序算法也被认为是"feature implementation"
+  
+问题2: 算法题被误判的原因
+
+很多算法题的描述方式：
+"I will give you a programming problem. You need to write a solution..."
+"Implement a function that..."
+"Create a program that..."
+
+打标模型看到 "implement"、"create"、"program" 这些词，就认为是在"实现功能"，从而错误地分类为 application development。
+
+问题3: 与其他类别的边界不清
+
+algorithm design and analysis 定义**:
+Includes algorithm correctness, time/space complexity, data structures, 
+searching, sorting, graph algorithms, etc.
+
+问题: 这个定义太学术化了，没有包含"编程练习"、"算法实现"等常见场景。
+
+data science and engineering 定义**:
+Covers data cleaning, ETL, analysis, visualization, statistics, 
+or working with large datasets.
+
+问题: 没有明确包含"数据处理算法"、"统计计算"等编程任务。
+
+💡 建议的提示词修改
+
+1. 修改 application development 定义**:
+### application development
+Dialog focuses on building REAL end-user applications (web servers, mobile apps, 
+desktop software), business logic implementation, user authentication, database 
+integration, API development, or production system features. 
+
+EXCLUDE: Algorithm problems, coding exercises, mathematical computations, 
+data structure implementations, or academic programming tasks.
+
+2. 扩展 algorithm design and analysis 定义**:
+### algorithm design and analysis
+Includes algorithm correctness, time/space complexity, data structures, 
+searching, sorting, graph algorithms, coding challenges, programming contests, 
+LeetCode-style problems, mathematical problem solving, or any algorithmic 
+implementation tasks.
+
+KEYWORDS: "programming problem", "algorithm", "complexity", "solve", "implement algorithm"
+
+3. 扩展 data science and engineering 定义**:
+### data science and engineering
+Covers data cleaning, ETL, analysis, visualization, statistics, mathematical 
+computations, numerical algorithms, data processing tasks, or working with datasets.
+
+INCLUDES: Statistical calculations, data manipulation, scientific computing
+加上机器学习和深度学习，怼着这几个python 库：
+暂时无法在飞书文档外展示此内容
+4. 添加明确的排除规则:
+IMPORTANT CLASSIFICATION RULES:
+- If dialog contains "I will give you a programming problem" → algorithm design and analysis
+- If dialog asks to "implement a sorting/searching algorithm" → algorithm design and analysis  
+- If dialog involves mathematical calculations → data science and engineering
+- If dialog builds actual web/mobile applications → application development
+
+💡 软工数据抽取建议：
+
+1. 推荐使用的语言组合：
+配置3F-FullStack: JavaScript + Dart + C# + Go
+- JavaScript: Web前端/后端开发
+- Dart: Flutter移动开发  
+- C#: 企业级后端开发
+- Go: 云原生服务开发
+
+2. 数据筛选策略：
+# 包含这些关键词的保留
+real_app_keywords = [
+    'web server', 'api', 'database', 'frontend', 'backend',
+    'mobile app', 'user interface', 'authentication', 'login',
+    'web application', 'rest api', 'http', 'html', 'css',
+    'react', 'vue', 'angular', 'node.js', 'express',
+    'spring', 'django', 'flask', 'mvc', 'crud', 'flutter'
+]
+
+# 排除这些关键词
+algorithm_keywords = [
+    'programming problem', 'algorithm', 'leetcode', 'complexity',
+    'time complexity', 'space complexity', 'solve the problem',
+    'given an array', 'given a string', 'find the', 'calculate the'
+]
+
+=== 过滤后的软工数据样本 ===
+
+Python (10 个样本):
+1. [implementation] Apply automatic image stitching to combine multiple images into a panoramic image using OpenCV....
+2. [implementation] Write a function to show a message on the console when the user runs the program....
+3. [implementation] 利用Tkinter库编写一个GUI界面...
+4. [implementation] Easy: Write a Python program to convert a set to a list....
+5. [implementation] Implement a Python function that takes a list of integers as an argument and checks if the list has a pair of elements that sum to zero. If such a pair exists, print both elements and their indices to the console. If no such pair exists, print a message indicating that no pair was found.
+The function should handle invalid inputs, such as empty lists, lists containing non-numeric elements, or list...
+  6. [implementation] Create a function that returns the product of two integers....
+  7. [implementation] 如何用Python计算两个数字之间的所有奇数？...
+  8. [implementation] You are tasked with creating a program to manage the training of subjects for a citizen science project on Zooniverse. The program needs to handle user authentication, workflow selection, subject set identification, defining training chances, and optionally editing subject metadata. Your task is to implement the logic for managing the training process based on the given parameters.
+You are provid...
+  9. [implementation] 怎样使用AI来识别打印及手写文字？...
+  10. [implementation] 用Python如何将数据写入文件中？...
+- 虽然过滤掉了算法题，但剩下的质量参差不齐
+- 有一些真正的应用开发（OpenCV图像拼接、Tkinter GUI）
+- 但也有很多基础编程题
+
+JavaScript (10 个样本):
+1. [implementation] Create a Node.js web server for a simple contact list management application. This server should have routes to allow users to add, update, delete, and list contacts in the database....
+2. [code explanation and documentation] How do you use JavaScript's reduce() method?...
+3. [implementation] Using DOM manipulation, replace the paragraph text with "Hello World" and change the font color to red. Additionally, ensure that the font size is set to 16px and the background color is set to yellow....
+4. [implementation] 用JavaScript编写一个函数，用于计算两个日期之间的天数...
+5. [modification and feature enhancement] In this task, you'll be given a piece of JavaScript code. Your job is to modify this code to add a new item to an array by using the push() method. Additionally, an error will be introduced in the code, which you will need to identify and correct.
+Update the following JavaScript code to add a new item to the end of an array using the push() method. Also, add an error in the code that needs to be f...
+  6. [implementation] Create a JavaScript function that calculates the sum of all numbers in an array...
+  7. [implementation] Create an HTML page with JavaScript functions for user authentication...
+  8. [implementation] Convert the given array of objects to a dictionary, but only include objects that have an even id and whose names contain the letter 'a'. The dictionary should have the id as the key and the name as the value.
+const arr = [
+  {id: 1, name: "John"},
+  {id: 2, name: "Jane"},
+  {id: 3, name: "Jake"},
+  {id: 4, name: "Joe"},
+  {id: 5, name: "Jill"}
+];
+Expected Output: 
+{
+  2: "Jane",
+  4: "Joe"
+}...
+  9. [implementation] Describe step by step how to reverse a string in JavaScript....
+  10. [code generation] Below is an instruction that describes a task. Write a response that appropriately completes the request.
+...
+
+
+Java (10 个样本):
+1. [implementation] 说明如何使用 Java 来实现一个堆排序...
+2. [implementation] 使用Java实现一个检测字符串中的重复字符的函数...
+3. [implementation] You are tasked with implementing a class to store information about SVN users and repositories. The class should have the following functionalities:
+1. Store and retrieve user information, including username, email, and access level.
+2. Store and retrieve repository information, including repository name, URL, and last commit date.
+You need to implement the SvnInfo class with the following met..
+  4. [implementation] Write a Java program to read in two numbers from the user and display their sum....
+  5. [implementation] 用 Java 写一个示例代码来计算四分之三的面积...
+  6. [implementation] Create a Java program to check if a given number is an Armstrong number or not....
+  7. [implementation] You are tasked with implementing a class that simulates a robot's field-oriented control system. The robot can move in any direction and rotate freely, and the field-oriented control system ensures that the robot's movement aligns with the field's orientation.
+You are provided with a partial code snippet for the robot's control system:
+public class FieldOrientedControlSystem {
+    privat...
+  8. [implementation] With Java, how do I check if a number is divisible by another number?...
+  9. [implementation] In Java, how do you make a method that takes a number and displays its square?...
+  10. [implementation] Using JAVA, implement a function that checks whether a given string is a palindrome or not....
+
+
+C# (10 个样本):
+  1. [implementation] Below is an instruction that describes a task. Write a response that appropriately completes the request.
+
+
+### Instruction:
+Create a C# function called "InsertCharacter" that takes a string input and inserts a character at a given index. However, the inserted character must be the ASCII value of the character at the given index plus the ASCII value of the last character in the string. The functio...
+
+  2. [implementation] The task in the instruction below requires a programming solution. Devise a code that successfully executes the described instructions.
+
+### Instruction:
+This question is kind of an add-on to this [question](https://stackoverflow.com/questions/44905/c-switch-statement-limitations-why)
+
+In C#, a switch case cannot fall through to other cases, this causes a compilation error.  In this case I am jus...
+
+  3. [implementation] You are tasked with implementing a simple caching mechanism using a dictionary in C#. Your goal is to create a Cache class that allows for storing key-value pairs and retrieving values based on their keys. Additionally, you need to handle cache expiration by removing items that have exceeded a specified time-to-live (TTL).
+
+Your Cache class should have the following functionalities:
+1. Add or upda...
+
+  4. [implementation] You are tasked with implementing a simple plugin system for a desktop application. The application allows users to create and manage various types of items, and the plugin system should enable developers to extend the application's functionality by adding new item types through custom plugins.
+
+To achieve this, you need to define an interface for the new item page, which represents the UI and beha...
+
+  5. [debugging and bug fixing] You are tasked with debugging a shader definition function in a game engine. The function `AddShaderDefinition` is used to add a new definition to a shader, but it seems that there is a bug in the code. The function takes two parameters: the name of the shader definition and a boolean value indicating whether the definition should be used. The code snippet provided attempts to add a shader definit...
+
+  6. [implementation] 用C#编写一段代码，计算三角形面积...
+
+  7. [implementation] Write a method in C# to reverse a string...
+
+  8. [implementation] If you had to provide a wizard like form entry experience in mvc how would you abstract the page flow?...
+
+  9. [implementation] 请编写C#代码，将字符串反转...
+
+  10. [implementation] I have a datalist with a OnDeleteCommand="Delete_Command".
+
+I want the delete a record with multiple primary Keys but I do not know how to access it from the Delete_Command event.
+
+If I use DataKeyField I'm limited to only one key.
+Any workarounds for this?...
+
+
+Swift (10 个样本):
+  1. [code analysis] You are given a code snippet containing Swift code. Your task is to analyze the code and identify the errors, missing components, and potential improvements. 
+
+Your specific tasks are as follows:
+1. Identify and correct any syntax errors in the code.
+2. Identify and correct any logical errors in the code.
+3. Add missing components to make the code functional.
+4. Provide a brief explanation of the ...
+
+  2. [code generation] revise this code for swift:
+import math
+import operator
+
+def advanced_calculations(operators, operands):
+    # Define trigonometric operations
+    trigonometric_operations = {
+        'sin': math.sin,
+        'cos': math.cos,
+        'tan': math.tan
+    }
+
+    # Define logical operations
+    logical_operations = {
+        'and': operator.and_,
+        'or': operator.or_,
+        'not': operator.no...
+
+  3. [implementation] You are tasked with designing a class for a calendar view in a mobile app. The class needs to handle various visual aspects of the calendar, such as separator thickness, hour indicator thickness, and the number of visible days in portrait and landscape modes. You are provided with the following code snippet as a starting point:
+
+```swift
+static let dashedSeparatorThickness = CGFloat(1)
+// Thicknes...
+
+  4. [implementation] You are tasked with implementing a custom logging system for a mobile application. The system should log events from different parts of the application, such as a collection view, and categorize them based on the scene where the event occurred.
+
+Your task is to create a Swift class that manages the logging functionality. The class should provide a method for logging events and a method for fatal e...
+
+  5. [implementation] Below is an instruction that describes a task. Write a response that appropriately completes the request.
+ If possible, organize your responses in a notebook format, which should include *code for implementation*, *natural language (text) for reasoning*, *code for execution*, and *execution results*. Please organize your code in a modular function.
+
+### Instruction:
+Build a Swift app that displays...
+
+  6. [implementation] You are tasked with implementing a simple dependency injection container in Swift. The container should be able to register and resolve dependencies using a protocol-oriented approach.
+
+Your task is to create a `DependencyContainer` class that allows registering and resolving dependencies. The container should support lazy instantiation of resolved dependencies.
+
+The `DependencyContainer` class sh...
+
+  7. [implementation] You are tasked with implementing a thread-safe error reporting mechanism in Swift. The provided code snippet shows a method `reportError` that can be called from any thread to report errors of type `BgfxError` along with an error message. Your task is to implement the `reportError` method in a thread-safe manner, ensuring that it can be safely called from multiple threads without causing race cond...
+
+  8. [implementation] 使用Swift开发一个iOS应用程序...
+
+  9. [implementation] Let's say you have a string variable in Swift and your task is to write a program that prints out the first three characters of that string, but in reverse order. 
+Make a Swift program to print out the first three characters of a given string and reverse them. 
+
+## Input:
+String word = "Hello";...
+
+  10. [implementation] You are tasked with implementing a utility function to normalize a given value within a specified range. The normalization process involves converting the input value to a normalized value within the range of 0 to 1, based on the provided range.
+
+You are given the following code snippet as a starting point:
+
+```swift
+var normalizedValue: CGFloat {
+    return normalizedValue(for: value)
+}
+
+func nor...
+
+
+Kotlin (0 个样本):
+  没有找到符合条件的样本
+
+Dart (10 个样本):
+  1. [implementation] Create a Flutter application for a simple calculator. This application should include a number input field and several buttons for basic calculator operations (addition, subtraction, multiplication, and division)....
+
+  2. [debugging and bug fixing] I have an enum in my model class:
+
+MyRepresentation { list, tabs, single }
+
+
+I have already added an adapter and registered it.
+I have given it a proper type id and fields.
+It gives error:
+> HiveError: Cannot write, unknown type: MyRepresentation. Did you forget to register an adapter?...
+
+  3. [code analysis] In Dart/Flutter, I have a StreamController defined like this:
+
+MyEventStreamer() {
+    _controller = StreamController<TimedEvent>(
+        onListen: _startStream,
+        onResume: () {
+          throw UnimplementedError();
+        },
+        onPause: () {
+          throw UnimplementedError();
+        },
+        onCancel: _stopStream);
+
+    _calculateEventTimes();
+  }
+
+
+The reason I have the throw...
+
+  4. [debugging and bug fixing] I am creating a Flutter app for scanning and listing available Wi-Fi networks near a mobile device. I am using the [wifi_scan](https://pub.dev/packages/wifi_scan) package.
+For Android it was working fine but for iOS, it is not showing the list. After searching for listing Wi-Fi networks on an iPhone, I concluded that there is some technical difficulties in implementing the functionality to scan fo...
+
+  5. [implementation] Below is an instruction that describes a task. Write a response that appropriately completes the request.
+ Please organize your code in a modular function.
+
+### Instruction:
+In my flutter App I can change the environment dynamically. Therefore I would like to change the environment accordingly for the crash tracking with sentry.
+Is there a way to change the environment at runtime?
+I just found [Se...
+
+  6. [debugging and bug fixing] I've developed an app with flutter. Socket is working perfectly. However, I realized that some devices cannot connect to Socket.
+I was searching about this issues but i found nothing. Do you have any idea about this problem?
+I couldn't debug devices which cannot connect to socket, I'll do it soon and let you know it.
+Nodejs server v4.5.5, flutter client 2.0.0
+If you had this issue before please le...
+
+  7. [implementation] I am Beginner in flutter, learning map concept. I am confusing map methods. How to delete a specific value from a map?
+for example:
+
+Map data = {
+  "studet1": {"name": "ajk", "age": "22", "place": "delhi"},
+  "studet2": {"name": "akmal", "age": "25", "place": "up"}
+};
+
+
+I want to delete the "name" from "student1"....
+
+  8. [debugging and bug fixing] Let's say I have a route defined as the following:
+
+GoRoute(
+  path: Screen.classDetail.path,
+  builder: (context, state) => AdminClassScreen(
+    classItem: state.extra as Class,
+  ),
+),
+
+
+and I navigate to it using
+
+router.push(Screen.classDetail.path, extra: extra);
+
+
+When I hot reload on Web, the application goes into a bad state because the object I am passing in as extra is not preserved. Is...
+
+  9. [implementation] Below is a instruction for a task. Draft a program that executes the instruction faithfully.
+ If possible, organize your responses in a notebook format, which should include *code for implementation*, *natural language (text) for reasoning*, *code for execution*, and *execution results*.
+
+### Instruction:
+How to implement Credential Management API in Flutter
+I want save login Credential in google....
+
+  10. [implementation] Create a Dart program to reverse a string without using built in methods.
+Hello...
+
+
+C (10 个样本):
+  1. [implementation] Develop a C language program that calculates the power of a certain numeric input by implementing the Math library's power function and utilizing pre-defined base and exponent components as parameters. The base in question is 5, and the exponential factor is 3....
+
+  2. [implementation] 编写一段C语言代码来打印出字符串中出现频率最多的字符...
+
+  3. [implementation] 创建一个C语言函数，用于将无符号整数转换成有符号整数。...
+
+  4. [implementation] You're studying the C programming language and have been asked to write a program that prints the ASCII value of a given character. You need a guide to understand how the ASCII value of a character can be determined and displayed to the user.
+As a programming assistant, I can generate a C program that prompts the user to enter a character and then prints the ASCII value of the given character.
+Gen...
+
+  5. [implementation] 编写脚本以在C语言中生成一个简单的图形...
+
+  6. [implementation] 请用C语言实现一个函数，可以快速求出字符串的长度...
+
+  7. [implementation] 使用C语言编写一段代码，从文本文件中读取信息并打印到屏幕上。...
+
+  8. [implementation] 在C语言中编写一个函数，用于判断一个字符是否为大写字母...
+
+  9. [implementation] 创建一个C语言函数来检测用户输入是否为回文字符串...
+
+  10. [code generation] show me the c adaptation of this:
+import os
+import json
+import torch
+from PIL import Image
+from torchvision import transforms
+from torchvision.models import resnet50
+from torch.utils.data import Dataset
+from torch.utils.data import DataLoader
+from torch import optim, nn
+
+# To transform images into tensors and normalize them
+transform = transforms.Compose([
+    transforms.Resize(256),
+    transform...
+
+
+C++ (10 个样本):
+  1. [implementation] Design and write code for a linked list data structure using C++...
+
+  2. [implementation] How to create a function in C++ that takes two integers and returns the sum of them?...
+
+  3. [implementation] Develop a C++ function that searches for a specified element within a provided array while considering edge cases and efficiency. Utilize this array: myArray = [10, 11, 12, 15, 17]; and search for the value x = 12....
+
+  4. [implementation] Develop a C++ program which counts the occurrences of each character in a given string....
+
+  5. [implementation] You are tasked with implementing a C++ header file for a 2D vector class. The header file should contain the forward declaration for the Vector2 class.
+
+Your task is to complete the header file by providing the full declaration for the Vector2 class, including the necessary member variables and member functions. The Vector2 class should support basic vector operations such as addition, subtraction...
+
+  6. [implementation] Architect a C++ function that amalgamates two pre-sorted singly linked lists, following an ascending order, into a singular, unified organized list. The lists are chain-structured with each node holding a numeric value and a pointer to the next node. Each list maintains a sorted order of elements from smallest to largest, and your function should maintain this order in the integrated list....
+
+  7. [implementation] Write a C++ code to generate the Fibonacci sequence from 0 to 100....
+
+  8. [implementation] 用C++语言如何快速实现链表反转？...
+
+  9. [implementation] 利用C++实现将字符串反转的功能...
+
+  10. [implementation] 请关注这个来自牛客网在线判题系统的编程挑战，并编写一个遵循题目要求的程序。确保你的代码遵从规定的输入输出格式，并在时间与空间的限制条件下完成。
+
+### 题目名称：
+寻找车位
+
+### 题目描述：
+access_globe 有一个巨大的停车场，这个停车场有 n 行，每行有 m 个车位。为了美观，access_globe 在建立这个停车场时，规定这个停车场必须是长条形的，即 n ≥m。每个车位都是一个正方形的区域。 最近，access_globe 正在为抽不到 Missing Poster 而苦恼，因此他请你帮他维护这个停车场。你需要支持两个个事件： - 一辆车停到某一个车位中，或一辆车从某个车位开走 - 查询一个矩形区域内最大的只包含空车位的正方形区域 如果你能帮 access_globe 高效地解决这个问题，access_globe 一定会好好奖励你的。
+
+### 输入格式：
+第一行包含...
+
+
+Rust (10 个样本):
+  1. [debugging and bug fixing] Compile the following Rust code and fix any compilation errors.
+fn main {
+ println! ("Hello World!");
+}...
+
+  2. [implementation] You are tasked with implementing a parser for a simplified programming language. The language uses tokens to represent different elements of the code, such as keywords, identifiers, and punctuation. Your task is to write a function that takes a vector of tokens and parses it to extract specific information based on the token types and their arrangement.
+
+You are given a code snippet that represent...
+
+  3. [code generation] Can you rework this code into Rust?
+from typing import List, Tuple
+
+def binary_and_shortest_subseq(a: List[int], b: List[int]) -> Tuple[int, int, List[int]]:
+    # bitwise AND operation
+    res = [a[i] & b[i] for i in range(len(a))]
+    
+    # initialization
+    min_len_subseq = res
+    min_start, min_end = 0, len(res) - 1
+    
+    # find shortest continuous subsequence
+    i = 0
+    while i < len...
+
+  4. [code generation] Can you make this snippet Rust-ready?
+import statistics
+import numpy as np
+
+def custom_base_operations(n, m, base, operation, precision=0):
+    if n > m or base < 2 or base > 32:
+        return -1
+
+    # Generate a list of numbers from n to m
+    numbers = list(range(n, m + 1))
+
+    # Perform the given operation
+    if operation == "sum":
+        res = sum(numbers)
+    elif operation == "diff":
+  ...
+
+  5. [implementation] Below is an instruction that describes a task. Write a response that appropriately completes the request.
+
+
+### Instruction:
+Develop a dedicated Microservice, utilizing either Rust or Kotlin, that is exclusively responsible for the acquisition and transformation of data derived from the Advanced Message Queuing Protocol (AMQP), and subsequently integrating this data into a Graph database. This mic...
+
+  6. [implementation] You are tasked with implementing a custom error handling system in Rust. The provided code snippet is importing error-related modules from a parent module using the `super` keyword. Your goal is to create a custom error type and an error collector to handle and report errors in a Rust application.
+
+Your task is to implement the following:
+1. Define a custom error type called `CustomError` that imp...
+
+  7. [implementation] You are tasked with implementing a custom error handling system for a Rust application. The application deals with profile management, and you need to create custom error types to handle various error scenarios. Specifically, you need to define an error type for the "BadRequestException" in the context of deleting a profile object.
+
+Your task is to define a custom error type called `DeleteProfileO...
+
+  8. [implementation] You are tasked with implementing a function to process events from an Amazon Simple Queue Service (SQS) using Rust. The provided code snippet is a part of an AWS Lambda function that handles SQS events. The `handler` function takes an `SqsEvent` and a `Context` as input parameters and returns a `Result` containing `()` or a `HandlerError`. The `SqsEvent` contains a list of records, each representi...
+
+  9. [implementation] You are tasked with implementing a Rust trait and its associated methods to model the behavior of different magical beings. The trait, named `Magical`, will define a method `cast_spell` that each magical being must implement. Additionally, you need to create two structs, `Wizard` and `Fairy`, which will both implement the `Magical` trait. Finally, you should write a function to test the behavior o...
+
+  10. [implementation] You are tasked with creating a Rust function that makes an HTTP GET request using the `reqwest` library and handles potential errors. The function should take a URL as input and return a result containing either the response body as a string or an error message.
+
+Write a function named `make_get_request` that accepts a URL as a string and returns a `Result<String, String>`. If the request is succe...
+
+
+Go (10 个样本):
+  1. [implementation] 用Go语言写一段可以执行并发操作的代码...
+
+  2. [modification and feature enhancement] Refine the following programming snippet:
+import (
+    "fmt"
+)
+
+// The function OddCount accepts an array of strings exclusively composed of digits as an input. Its task is to return an array, where each element i is expected to be "the number of odd elements in the string i of the input." with substitutions made for all the i's using the count of odd digits present in the i'th string of the input...
+
+  3. [implementation] 如何用Go语言编写HTTP服务端？...
+
+  4. [implementation] Refine the following programming snippet:
+import (
+    "fmt"
+)
+
+// The function OddCount accepts an array of strings exclusively composed of digits as an input. Its task is to return an array, where each element i is expected to be "the number of odd elements in the string i of the input." with substitutions made for all the i's using the count of odd digits present in the i'th string of the input...
+
+  5. [implementation] 使用 Go 语言来实现一个函数，该函数可以判断一个整数是否为偶数...
+
+  6. [code generation] I'm curious about the Go translation of this code:
+def median_in_interval(l: list, lower_limit: int, upper_limit: int) -> bool:
+    l.sort()
+    length = len(l)
+    if length % 2 == 0:
+        median = (l[length//2 - 1] + l[length//2]) / 2
+    else:
+        median = l[length//2]
+    return lower_limit <= median <= upper_limit...
+
+  7. [code generation] How would you write this in Go?
+import java.util.*;
+
+class Solution {
+    public List<List<String>> cycpatternCheck(List<String> words) {
+        List<List<String>> result = new ArrayList<>();
+        if (words == null || words.size() == 0) {
+            return result;
+        }
+            
+        for (int i = 0; i < words.size(); i++) {
+            Set<String> set = new HashSet<>();
+           ...
+
+  8. [implementation] 请使用Go语言来编写一个Web服务器...
+
+  9. [implementation] 使用Go如何创建并运行WebSocket服务器？...
+
+  10. [implementation] Create a Go program to convert a given temperature from Kelvin to Celsius....
+
+
+20251208 重标方案
+Lanuguage 
+不变
+Context
+1. Algorithm design and analysis
+2. data science and engineering
+3. ui/ux engineering
+4. Backend development
+5. system and infra development
+6. database system
+7. Multi-media
+8. testing and debugging（跟测试和debug相关就分到这类，哪怕是个data science的？）
+9. Other application development
+Task 
+[251203] 数据验证试验规划
