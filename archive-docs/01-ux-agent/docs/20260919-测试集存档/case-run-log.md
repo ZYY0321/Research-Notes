@@ -1376,7 +1376,7 @@ BF-ALIPAY-G01-S2 一框一滑五次、反向滑完人眼仍不在原位、整次
 ### TAB-12306-找回密码 铁路 12306 找回密码（平板，不在问题单）
 
 - 设备：平板 `37XUN24711G01412`，`1840×2800`。前台 `com.chinarailway.ticketingHM`。未用 hidumper。
-- 问题单：`docs/三折叠:平板问题单.txt` 只有点评民宿和滴滴加油/充电，没有这页。测试集也没有这页的图和 XML。
+- 问题单：`docs/三折叠-平板问题单.txt` 只有点评民宿和滴滴加油/充电，没有这页。测试集也没有这页的图和 XML。
 - 现场：找回密码，三个页签「人脸识别 / 手机号码 / 电子邮件」。字的黑边停在 x=1686，离右缘 153px。页签容器贴边（可见右缘 1840，原始右缘 1841）。上面这几行不能下滑。
 - 第一次 `20260924-033653-136`：模型 3 框，都是 `text_truncation`、`slide_direction: down`，落在三个页签上。layout 全是 `unknown`。下滑 `(1069,510)`→`(1069,790)`，框内差 0%，整页 0%。整组都是 confirmed 时，`clearConfirmedInMovedGroup` 返回同一个数组，接着 `results.length = 0` 把结果抹掉，读 `slide_result` 崩了。页级 unknown。
 - 改进：先复制再清空。可滚的组仍走新数组，已过的上滑 case 不改这条。0% 的组不再崩，按原意留下 confirmed。
@@ -1392,7 +1392,7 @@ BF-ALIPAY-G01-S2 一框一滑五次、反向滑完人眼仍不在原位、整次
 
 ### TAB-12306-找回密码-真截断 专记
 
-- 定性：真截断。已写入 `docs/三折叠:平板问题单.txt` 和 `docs/合作与测试队列.md`。不放进 `tablet_xml_normal`，那个文件夹名是非截断。
+- 定性：真截断。已写入 `docs/三折叠-平板问题单.txt` 和 `docs/合作与测试队列.md`。不放进 `tablet_xml_normal`，那个文件夹名是非截断。
 - XML：`docs/20260919-测试集存档/问题单/平板-12306-找回密码/window_dump.xml`。由这次检测的 `snapshot_window.json` 转成和测试集一样的 `uitest dumpLayout` hierarchy。设备 `37XUN24711G01412`，`1840×2800`。页是 `getPwd.html`（忘记密码）。
 - 检测 `20260924-034135-011`：模型 3 框，都是 `text_truncation`、`slide_direction: down`，落在三页签。layout 三框 `unknown`。下滑 `(773,507)`→`(773,787)`，三框差 0%，`confirmed`。页级 **bad**，三框留下。算法 **4.7s**（模型 6.6s 不算）。
 - 证据：
@@ -1472,13 +1472,13 @@ BF-ALIPAY-G01-S2 一框一滑五次、反向滑完人眼仍不在原位、整次
   - layout：`.../20260924-040514-905/layout_result.json`
   - 滑动：`.../20260924-040514-905/slide-ops.jsonl`
   - 总结果：`.../20260924-040514-905/snapshot_ux.json`
-- 状态：**遮盖，不在当前范围。** 黄色「确认」压住「请准确维护儿童年龄…」。当前只做文字 / 组件 / 图标截断。已写入 `docs/三折叠:平板问题单.txt`、`docs/合作与测试队列.md`、`docs/20260919-测试集存档/给测试团队的问题.md`。
+- 状态：**遮盖，不在当前范围。** 黄色「确认」压住「请准确维护儿童年龄…」。当前只做文字 / 组件 / 图标截断。已写入 `docs/三折叠-平板问题单.txt`、`docs/合作与测试队列.md`、`docs/20260919-测试集存档/给测试团队的问题.md`。
 
 ### ISSUE-DIANPING-HOTEL-SINGLE 大众点评酒店/旅行（三折叠单屏，真截断）
 
 - 设备：三折叠 `29L0124226000058`，单屏 `1008×2232`。未用 hidumper。
 - 模型调用：这次没有 `model_http.json`，不是校园网 `/detect`。走兼容对话接口，请求是 `POST {baseURL}/chat/completions`。`snapshot_ux.json` 的 `apiConfig.model` 是 `gpt-5.6-sol`。返回 2 个 `text_truncation`，都是 `slide_direction: left`。接口主机名不写入交付材料，`apiConfig.baseURL` 留空。布局和左滑是这次调用之后的结果。
-- 定性：人定为真截断。已写入 `docs/三折叠:平板问题单.txt` 和 `docs/合作与测试队列.md`。
+- 定性：人定为真截断。已写入 `docs/三折叠-平板问题单.txt` 和 `docs/合作与测试队列.md`。
 - XML：`docs/20260919-测试集存档/问题单/三折叠-点评-酒店旅行-单屏/window_dump.xml`
 - 模型 2 框，都是 `text_truncation`、`slide_direction: left`。
 - 标题「酒店 / 旅行」右缘：框 `[891,66,1000,137]`。layout `unknown` / `no_matching_component`。左滑 `(948,227)`→`(847,227)`，框内差 0%，整页平均差 2.23% 没过 2.5%，没回滑，`confirmed`。滑后标题仍是「旅」被切。
@@ -1495,7 +1495,7 @@ BF-ALIPAY-G01-S2 一框一滑五次、反向滑完人眼仍不在原位、整次
 
 ### ISSUE-DIDI-TRIFOLD 滴滴加油/充电（三折叠，没找到）
 
-- 问题单：`docs/三折叠:平板问题单.txt` 三折叠一条，滴滴加油或充电主页，单屏、双屏。
+- 问题单：`docs/三折叠-平板问题单.txt` 三折叠一条，滴滴加油或充电主页，单屏、双屏。
 - 2026-09-23 在三折叠上没找到这页。未跑检测。
 - 平板那条滴滴加油/充电仍留在问题单里，这次没动。
 - 状态：**没找到。**
@@ -1503,7 +1503,7 @@ BF-ALIPAY-G01-S2 一框一滑五次、反向滑完人眼仍不在原位、整次
 ### ISSUE-DIDI-TABLET 滴滴加油（平板横屏，截到了，检测没跑完）
 
 - 设备：平板 `37XUN24711G01412`，现场 `2800×1840`。未用 hidumper。
-- 问题单：`docs/三折叠:平板问题单.txt` 平板一条是加油或充电主页。仓库里没有更早的检出留档。
+- 问题单：`docs/三折叠-平板问题单.txt` 平板一条是加油或充电主页。仓库里没有更早的检出留档。
 - 现场：左边是滴滴出行首页，右边是「滴滴加油」。截图 `docs/20260919-测试集存档/问题单/平板-滴滴加油/snapshot.png`（16:06）。
 - 哪一段：还没进模型。接着跑 `ux-detect` 时 `hdc list targets` 变成空的，dump 只有 `Device not found or connected`。产物 `HarmonyArena-fdu_agent/ux-detect-output/20260925-000703-375/snapshot_window.json`。
 - 改进方向：平板重新连上、人还停在这一页之后再跑。不要把这张截图写成已经检出。
