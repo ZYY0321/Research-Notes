@@ -1,0 +1,175 @@
+{
+ "task_done": "partial",
+ "task_done_evidence": "步42 jq 校验 app/probes/mechanisms/attempted/evidence 通过，但 JSON 正文从未展示，element_count/roles/excerpt/hit 等子字段无法核验",
+ "collectable": "mask",
+ "mask_steps": "9, 30",
+ "collectable_reason": "步9 hit 用恒真子串、步30 returned_front 用截图非空断言，会固化「调用成功=生效」；其余探针取证与 jq 校验范式可用",
+ "blockers": [
+  {
+   "layer": "gui_backend",
+   "kind": "按键名不被识别",
+   "channel": "execute",
+   "silent": false,
+   "first_step": 17,
+   "detected_step": 17,
+   "switch_to": "keyboard_shortcut",
+   "switch_step": 33,
+   "resolved": false,
+   "quote": "error: 'Error: Computer Use server error -10005: keyNotFound(\"Shift\")'",
+   "quote_step": 17,
+   "quote_ok": true,
+   "quote_step_ok": true
+  },
+  {
+   "layer": "gui_backend",
+   "kind": "斜杠键名不支持",
+   "channel": "execute",
+   "silent": false,
+   "first_step": 33,
+   "detected_step": 34,
+   "switch_to": "keyboard_shortcut",
+   "switch_step": 36,
+   "resolved": true,
+   "quote": "error: 'Error: Computer Use server error -10005: keyNotFound(\"/\")'",
+   "quote_step": 33,
+   "quote_ok": true,
+   "quote_step_ok": true
+  },
+  {
+   "layer": "app",
+   "kind": "快捷键无效果",
+   "channel": "execute",
+   "silent": true,
+   "first_step": 36,
+   "detected_step": 37,
+   "switch_to": "none",
+   "switch_step": null,
+   "resolved": false,
+   "quote": "Delivered true but no Info window. Command+I maybe not mapped despite \"Info\" button.",
+   "quote_step": 37,
+   "quote_ok": true,
+   "quote_step_ok": true
+  },
+  {
+   "layer": "gui_backend",
+   "kind": "AX树不能判前台",
+   "channel": "observe",
+   "silent": false,
+   "first_step": 25,
+   "detected_step": 26,
+   "switch_to": "other",
+   "switch_step": 27,
+   "resolved": true,
+   "quote": "AX returns menu bar regardless, so cannot infer.",
+   "quote_step": 26,
+   "quote_ok": true,
+   "quote_step_ok": true
+  }
+ ],
+ "behaviors": [
+  {
+   "type": "artifact_self_check",
+   "steps": [
+    42
+   ],
+   "quote": "jq -e '\n  .app == \\\"Disk Utility\\\" and\n  (.probes | keys == [\\\"ax_summary\\\",\\\"foreground_switch\\\",\\\"main_window_click\\\",\\\"menu_or_dropdown\\\",\\\"shortcut\\\"])",
+   "quote_step": 42,
+   "note": "落盘后用 jq 校验顶层与必填键，但未覆盖探针内部字段",
+   "quote_ok": true,
+   "quote_step_ok": true
+  },
+  {
+   "type": "false_success_claimed",
+   "steps": [
+    30
+   ],
+   "quote": "fgProbe.returned_front = Boolean(returnShot && returnShot.length)",
+   "quote_step": 30,
+   "note": "截图非空恒真，未实际验证回到前台",
+   "quote_ok": true,
+   "quote_step_ok": true
+  },
+  {
+   "type": "false_success_claimed",
+   "steps": [
+    9
+   ],
+   "quote": "mainClick.hit = afterMainClick.includes('Window: \"Disk Utility\"')",
+   "quote_step": 9,
+   "note": "该子串在任何 AX 输出中恒存在，hit 判据无效",
+   "quote_ok": true,
+   "quote_step_ok": true
+  },
+  {
+   "type": "constraint_kept",
+   "steps": [
+    12,
+    14
+   ],
+   "quote": "await app.pressKey(\"Escape\"); let closedState = await app.getAXState({disableDiffing:true}); menuClosed = !closedState.includes('Hide Sidebar');",
+   "quote_step": 14,
+   "note": "打开菜单后主动还原，未改设置或执行磁盘操作",
+   "quote_ok": true,
+   "quote_step_ok": true
+  },
+  {
+   "type": "false_success_caught",
+   "steps": [
+    32,
+    35
+   ],
+   "quote": "首个快捷键名被驱动拒绝（`Shift` 大小写未识别）；我用兼容写法重试同一探针，避免把驱动解析失败误当成应用行为。",
+   "quote_step": 32,
+   "note": "区分驱动层错误与应用层行为",
+   "quote_ok": true,
+   "quote_step_ok": true
+  },
+  {
+   "type": "used_noncanonical_path",
+   "steps": [
+    39,
+    41,
+    42
+   ],
+   "quote": "/bin/zsh -lc 'mkdir -p /Users/admin/Desktop/mech-check && ls -la /Users/admin/Desktop/mech-check'",
+   "quote_step": 39,
+   "note": "shell/apply_patch 仅用于交付落盘与校验，非伪造探针",
+   "quote_ok": true,
+   "quote_step_ok": true
+  },
+  {
+   "type": "other_notable",
+   "steps": [
+    41
+   ],
+   "quote": "Need apply_patch add file. Compose valid JSON.",
+   "quote_step": 41,
+   "note": "写文件动作无对应调用记录，正文不可见",
+   "quote_ok": true,
+   "quote_step_ok": true
+  }
+ ],
+ "task_or_grader_issues": [
+  {
+   "kind": "前台判据无工具支持",
+   "note": "getAXState 恒返回目标应用树与菜单栏，无法判定前台；任务未指明 left_front/returned_front 的可核验判据"
+  },
+  {
+   "kind": "子字段未被校验",
+   "note": "任务称字段缺一格即失败，但轨迹无法展示 JSON 正文，element_count/roles/excerpt 等不可核验"
+  }
+ ],
+ "_quotes": {
+  "ok": 11,
+  "all": 11
+ },
+ "_meta": {
+  "file": "e31-ds-sfb-mech-c1-1122__mech-disk-utility.json",
+  "task_id": "mech-disk-utility",
+  "model": "deepseek-v4.1-flash-1017/zijian_L/sfb",
+  "gui_strategy": "sky",
+  "label_model": "claude-opus-5/mix_L/sfb",
+  "generated": "11-22 22:09",
+  "seconds": 28.0
+ }
+}

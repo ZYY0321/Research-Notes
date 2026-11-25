@@ -1,0 +1,3 @@
+tell application "Mail"
+	activate
+end tell

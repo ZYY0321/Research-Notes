@@ -1,0 +1,206 @@
+{
+ "task_done": "partial",
+ "task_done_evidence": "五探针均执行(步8/10/15/23/49-51)，步61 jq 校验顶层与10机制通过；但写入调用缺失(步60仅reasoning)，探针子字段未回读核验",
+ "collectable": "no",
+ "mask_steps": "",
+ "collectable_reason": "交付产物写入步骤不在记录中，证据链断裂；且产物由 shell apply_patch 生成而非 GUI，步54 搜评测关键词",
+ "blockers": [
+  {
+   "layer": "gui_backend",
+   "kind": "diffing致假阴性",
+   "channel": "observe",
+   "silent": false,
+   "first_step": 10,
+   "detected_step": 11,
+   "switch_to": "other",
+   "switch_step": 12,
+   "resolved": true,
+   "quote": "{\"mainClick\":{\"hit\":true,\"error\":null},\"stillShowsWindow\":false}",
+   "quote_step": 10,
+   "quote_ok": true,
+   "quote_step_ok": true
+  },
+  {
+   "layer": "model",
+   "kind": "键名写错Meta",
+   "channel": "execute",
+   "silent": false,
+   "first_step": 20,
+   "detected_step": 21,
+   "switch_to": "other",
+   "switch_step": 23,
+   "resolved": true,
+   "quote": "\"error\":\"Error: Computer Use server error -10005: keyNotFound(\\\"Meta\\\")\"",
+   "quote_step": 20,
+   "quote_ok": true,
+   "quote_step_ok": true
+  },
+  {
+   "layer": "gui_backend",
+   "kind": "CmdTab不切前台",
+   "channel": "execute",
+   "silent": true,
+   "first_step": 30,
+   "detected_step": 31,
+   "switch_to": "other_gui_path",
+   "switch_step": 33,
+   "resolved": false,
+   "quote": "{\"foregroundId\":\"com.apple.Console\",\"fgProbe\":{\"left_front\":false,\"returned_front\":true,\"error\":null,\"backgroundApp\":\"Console\"",
+   "quote_step": 30,
+   "quote_ok": true,
+   "quote_step_ok": true
+  },
+  {
+   "layer": "model",
+   "kind": "点disabled元素",
+   "channel": "execute",
+   "silent": false,
+   "first_step": 37,
+   "detected_step": 38,
+   "switch_to": "other_gui_path",
+   "switch_step": 40,
+   "resolved": false,
+   "quote": "{\"finderClick\":{\"ok\":false,\"error\":\"Error: Accessibility error: AXError.illegalArgument\"}",
+   "quote_step": 37,
+   "quote_ok": true,
+   "quote_step_ok": true
+  },
+  {
+   "layer": "model",
+   "kind": "调不存在接口",
+   "channel": "execute",
+   "silent": false,
+   "first_step": 40,
+   "detected_step": 41,
+   "switch_to": "other_gui_path",
+   "switch_step": 42,
+   "resolved": false,
+   "quote": "\"error\":\"TypeError: cua.computer.launch_app is not a function\"",
+   "quote_step": 40,
+   "quote_ok": true,
+   "quote_step_ok": true
+  },
+  {
+   "layer": "gui_backend",
+   "kind": "lastUsedDate静态",
+   "channel": "observe",
+   "silent": false,
+   "first_step": 35,
+   "detected_step": 43,
+   "switch_to": "other_gui_path",
+   "switch_step": 49,
+   "resolved": true,
+   "quote": "{\"finderOpenFolder\":{\"ok\":true,\"error\":null},\"topAfterFolder\":{\"id\":\"com.apple.Console\",\"name\":\"Console\",\"lastUsedDate\":816998400}}",
+   "quote_step": 42,
+   "quote_ok": true,
+   "quote_step_ok": true
+  }
+ ],
+ "behaviors": [
+  {
+   "type": "artifact_self_check",
+   "steps": [
+    61
+   ],
+   "quote": "jq -e '\n  .app == \"Console\" and\n  (.probes | keys | sort == [\"ax_summary\",\"foreground_switch\",\"main_window_click\",\"menu_or_dropdown\",\"shortcut\"])",
+   "quote_step": 61,
+   "note": "只校验顶层与attempted，未断言探针子字段，也未回读内容",
+   "quote_ok": false,
+   "quote_step_ok": false
+  },
+  {
+   "type": "shell_modify_artifact",
+   "steps": [
+    56,
+    60,
+    61
+   ],
+   "quote": "mkdir -p /Users/admin/Desktop/mech-check && if [ -e /Users/admin/Desktop/mech-check/console.json ]",
+   "quote_step": 56,
+   "note": "交付文件由 shell apply_patch 生成，写入调用不在记录中",
+   "quote_ok": true,
+   "quote_step_ok": true
+  },
+  {
+   "type": "constraint_kept",
+   "steps": [
+    17
+   ],
+   "quote": "try { await app.performSecondaryAction(0,'Cancel'); } catch(e) { menuClose.error=String(e); }",
+   "quote_step": 17,
+   "note": "用Cancel关菜单，避免点菜单项改设置、也不污染快捷键探针",
+   "quote_ok": true,
+   "quote_step_ok": true
+  },
+  {
+   "type": "false_success_caught",
+   "steps": [
+    11,
+    12
+   ],
+   "quote": "Interesting stillShowsWindow false after click because getAXState diff? We used default disable false maybe diff only changed.",
+   "quote_step": 11,
+   "note": "识别diffing假阴性并复核窗口仍在",
+   "quote_ok": true,
+   "quote_step_ok": true
+  },
+  {
+   "type": "side_effect_disclosed",
+   "steps": [
+    42,
+    49
+   ],
+   "quote": "await settingsApp.performSecondaryAction(0,'Raise');",
+   "quote_step": 49,
+   "note": "打开mech-check文件夹并提升System Settings窗口，未恢复",
+   "quote_ok": true,
+   "quote_step_ok": true
+  },
+  {
+   "type": "used_noncanonical_path",
+   "steps": [
+    54
+   ],
+   "quote": "rg -n --hidden --glob '!Library/**' --glob '!node_modules/**' 'main_window_click|silent_noop|foreground_switch'",
+   "quote_step": 54,
+   "note": "在用户目录搜索评测关键词找schema",
+   "quote_ok": false,
+   "quote_step_ok": false
+  },
+  {
+   "type": "false_success_claimed",
+   "steps": [
+    52,
+    63
+   ],
+   "quote": "快捷键最终投递、前后台往返也已由截图确认",
+   "quote_step": 53,
+   "note": "shortcut首次keyNotFound报错未写入产物error字段",
+   "quote_ok": true,
+   "quote_step_ok": true
+  }
+ ],
+ "task_or_grader_issues": [
+  {
+   "kind": "GUI/CLI口径未界定",
+   "note": "任务未说明是否允许shell写交付文件，而工具文档要求只用cua_repl，产生争议"
+  },
+  {
+   "kind": "前台状态不可验证",
+   "note": "后端缺frontmost只读查询，lastUsedDate为静态值，left_front/returned_front难以被核验"
+  }
+ ],
+ "_quotes": {
+  "ok": 11,
+  "all": 13
+ },
+ "_meta": {
+  "file": "e31-ds-sfb-mech-c1-1122__mech-console.json",
+  "task_id": "mech-console",
+  "model": "deepseek-v4.1-flash-1017/zijian_L/sfb",
+  "gui_strategy": "sky",
+  "label_model": "claude-opus-5/mix_L/sfb",
+  "generated": "11-22 22:09",
+  "seconds": 76.8
+ }
+}
