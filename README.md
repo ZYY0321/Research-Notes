@@ -40,7 +40,7 @@
 
 | 目录 | 归档内容 | 关键文档索引 |
 |---|---|---|
-| [`archive-docs/01-ux-agent/`](archive-docs/01-ux-agent/) | **华为 HarmonyOS 多设备 UX 检测系统 (`UX-Agent`)** | `design-specs/GUIAgent多设备UX检测系统-核心算法与代码对照详细设计说明书.md`（V2.0 视觉提案 + ArkUI 布局树静态复核 + 主动滑动与原位恢复）、`acceptance-specs/`（功能/模型性能验收说明与测试报告）、`docs/test-set/`（5 类设备单双三屏测试集与运行日志） |
+| [`archive-docs/01-ux-agent/`](archive-docs/01-ux-agent/) | **华为 HarmonyOS 多设备 UX 检测系统 (`UX-Agent`)** | `design-specs/`、`acceptance-specs/`、`docs/test-set/`；**【到指定页面】研究**：[`2026-11-25_到指定页面研究/`](archive-docs/01-ux-agent/2026-11-25_到指定页面研究/)（T+6 真机百炼到页试跑、失败归因、新文献对照；**不是**截断/UX 检出） |
 | [`archive-docs/02-cua-openmobile2/`](archive-docs/02-cua-openmobile2/) | **商汤 OpenMobile-2 / MobileGym++（过程文档 + 终稿/代码摘录 + mac-cua 评测汇报）** | [`论文终稿_OpenMobile2/`](archive-docs/02-cua-openmobile2/论文终稿_OpenMobile2/)、[`核心代码摘录/`](archive-docs/02-cua-openmobile2/核心代码摘录/)、[`mac-cua评测汇报/`](archive-docs/02-cua-openmobile2/mac-cua评测汇报/)（11-18 周会 + 11-11 阶段汇报主文档）；完整工程仍在仓外 `mobilegym-mock-tooluse` / `CUA` |
 | [`archive-docs/03-slidegate-and-lingcoder/`](archive-docs/03-slidegate-and-lingcoder/) | **M集群：SlideGate 幻灯片审校、AgentV3 全链路蒸馏 & LingCoder 代码工作流** | `gui-5d025-2-full-handover/`（**2026-11-16 完整评测与训练蒸馏机交接包**：AgentV3 四层编排源码与 `State V3` 文档、1.6万条 SFT 六步清洗脚本、全轨迹 DPO 构造与排障、5.2万张图文版式蒸馏、SlideGate ICLR 2027 定稿 LaTeX 与 Rebuttal 全文）、`训练配置和启动指南.md`（LingCoder 30B MoE 32卡消融） |
 | [`archive-docs/04-prior-thesis-and-reviews/`](archive-docs/04-prior-thesis-and-reviews/) | **本科毕设、RealEval/SPA-Bench 论文草稿与个人复盘** | `thesis/毕设/`（GUI Agent 架构与技术研究、开题/答辩/文献综述）、`thesis/realbench草稿/`（RealEval / MobileBench-v2 / 轨迹级非二元评测草稿）、`internship-timeline/`（商汤实习全时间线） |
