@@ -1,9 +1,9 @@
 # 真机百炼到页试跑备忘（2026-11-24/25）：高级指令批次与失败归因
 
-> **存放状态**：本备忘暂存于 UX-Agent 材料目录，**尚未上传** Research-Notes。待她指示后再 push。
+> **存放状态**：已入 Research-Notes `archive-docs/01-ux-agent/2026-11-25_到指定页面研究/`（【到指定页面】）；工程原件仍在 UX-Agent。
 > **作者**：正文由 **Claude Opus 5.5**（TokenHub CLAUDE55 / `awsb_L/sfa`）生成；§「主 agent 核对」为 Composer 补路径。更早的分条归因见 `api归因原文.md`（同 Opus 5.5）与 `api归因续.md`（**Fable 5.2**）。
-> **新文献**：仓内旧笔记不够；2026-11-25 另搜对照见 `/Users/zhangyingying/UX-Agent/docs/材料/2026-11-24_1215高低级指令导航交付/失败归因_1125/新文献对照_到页与高低级.md`（DestBench/TAG-Nav、DAC-Bench HL/LL、GUI-Robust 等）。
-> **扩测**：免登录扩包 `tasks-nav-nologin-expand-1125f.json` **149 条**（H+L），接在 1125e 后自动开跑。
+> **新文献**：见同目录 `新文献对照_到页与高低级.md`（DestBench/TAG-Nav、DAC-Bench HL/LL、GUI-Robust 等）。
+> **覆盖范围**：API 分条归因覆盖 **1125b 五失败**；总台账覆盖到 **1125d**（及当时进行中的 1125e）。**1125e 已收 11/11**；**1125f（149）仍在跑，尚无新一轮失败 API 归因**。
 
 ---
 
@@ -28,7 +28,8 @@ T+6 阶段（12-15 交 Agent V1，交付内容为到达页面 + 7 类检测）�
 | 1125b · 短路径 commercial | 剔除钉钉（登录墙） | 13/14 | 92.9% | 只剔除了已知登录墙；其余条目是否免登录未逐条核对 |
 | 1125b · deep | 全部 | 0/3 | 0% | DEEP-ctrip 类 |
 | nav-high-nologin-1125d | 免登录高级 | **11/12** | **91.7%** | 唯一失败：COM-kugou-tablet-g02-H |
-| nav-high-nologin-1125e | 免登录高级（剩余） | 进行中 / 11 | — | 跑完后回填 |
+| nav-high-nologin-1125e | 免登录高级（剩余） | **11/11** | 100% | 已收；无失败可归因 |
+| nav-nologin-expand-1125f | 免登录 H+L 扩包 | 进行中 / 149 | — | 收完后若有失败再跑 API 归因 |
 
 **口径规则**：按用户要求，「不能登录的先不跑」。钉钉等登录墙任务不计入分母，单独记为「范围外」。
 
