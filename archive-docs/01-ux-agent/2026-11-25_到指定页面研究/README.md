@@ -24,7 +24,7 @@
 | nav-high-167-1125b | 高级混合（含 deep） | **13/18**；短路径 commercial 13/15；deep 0/3 |
 | nav-high-nologin-1125d | 免登录高级 | **11/12** |
 | nav-high-nologin-1125e | 免登录高级 | **11/11** |
-| nav-nologin-expand-1125f | 免登录 H+L 扩包 | 停于 ~49：COM **35/38**；CM 因未装+掉线剔除；余 GRAPE 开 `1125g` |
+| nav-nologin-expand-1125f | 免登录商业扩包 | COM **35/38**（假失败复核后可更高）；**开源 CM/GRAPE 一律不测**（用户 11-25） |
 
 需登录（钉钉/企微/微信等）按用户要求不跑，不进分母。
 
